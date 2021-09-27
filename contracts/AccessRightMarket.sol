@@ -1,10 +1,9 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./AccessRightNFT.sol";
-//import "hardhat/console.sol";
 
 contract AccessRightMarket is Initializable {
 
@@ -26,6 +25,7 @@ contract AccessRightMarket is Initializable {
     SetPrice(tokenId, price);
   }
 
+  // with royalty
   function buyNFT(uint256 tokenId) public payable {
     require(art.ownerOf(tokenId) != msg.sender, "you have already own it");
     require(msg.value >= _prices[tokenId], "not enough ether");

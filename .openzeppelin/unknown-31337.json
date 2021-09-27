@@ -7,8 +7,8 @@
       "hash": "0x9a25f7d14a059003ecc42356add0fe28ca37ac6c62966bbf9cd76939393b5cd0",
       "type": 0,
       "accessList": null,
-      "blockHash": "0xce5fcdc6ab71e6796cc15ba229db4fc007769fa0ad18070d47944723e715e4c6",
-      "blockNumber": 11,
+      "blockHash": "0xc2cb3be757e8a8f33c6674243a9fd81834e8c613bcc673dfb2dfef1091950aa9",
+      "blockNumber": 16,
       "transactionIndex": 0,
       "confirmations": 1,
       "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
@@ -42,7 +42,7 @@
     },
     {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0x94563dc4ac9ee194092600755c6259541ceb025217fff819a0645bfdc658dcdb",
+      "txHash": "0x55e09e1e86541bf6b7ee420cd258887bb50163d90fc93b910d0d00714f9762c2",
       "kind": "transparent"
     }
   ],
@@ -129,9 +129,9 @@
         }
       }
     },
-    "f9f2c99915f66e2309e06b387e74ac72cfd54d06953a559263c040ed5f31d6dc": {
+    "45b954561d2cd1543fcf1cfd06ca24948cc37f9aca2b823c278cf99bdd3a0b06": {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xf4cc21c43c2240fe1e1cade9a0b90dad43e52d1b5410d549c0fb62b16f2e9100",
+      "txHash": "0xa8b62c57847ba69ca8b9d25e0cab3524e9809c8a2bf385b38dbc0f9fd950ac2a",
       "layout": {
         "storage": [
           {
@@ -150,13 +150,13 @@
             "contract": "AccessRightMarket",
             "label": "_prices",
             "type": "t_mapping(t_uint256,t_uint256)",
-            "src": "contracts/AccessRightMarket.sol:12"
+            "src": "contracts/AccessRightMarket.sol:11"
           },
           {
             "contract": "AccessRightMarket",
             "label": "art",
-            "type": "t_contract(AccessRightNFT)2384",
-            "src": "contracts/AccessRightMarket.sol:14"
+            "type": "t_contract(AccessRightNFT)2404",
+            "src": "contracts/AccessRightMarket.sol:13"
           }
         ],
         "types": {
@@ -166,7 +166,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(AccessRightNFT)2384": {
+          "t_contract(AccessRightNFT)2404": {
             "label": "contract AccessRightNFT"
           },
           "t_bool": {

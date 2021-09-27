@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
-import './ERC2981PerTokenRoyalties.sol';
+import './IERC2981Royalties.sol';
+import "hardhat/console.sol";
 
-contract AccessRightNFT is ERC721, ERC2981PerTokenRoyalties, Ownable {
+contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     using Strings for uint256;
 
     string private _baseURIextended;
@@ -19,6 +20,12 @@ contract AccessRightNFT is ERC721, ERC2981PerTokenRoyalties, Ownable {
     mapping(uint256 => uint256[]) private _tokens;
     // mapping from token Id to content Id
     mapping(uint256 => uint256) private _contents;
+    // mapping from content Id to price you need to pay when minting
+    mapping(uint256 => uint256) private _prices;
+    // mapping from content Id to royalty
+    mapping(uint256 => uint256) private _royalties;
+    // mapping from content Id to royalty receiver
+    mapping(uint256 => address) private _receivers;
     // mapping from content Id to mapping address to the number of content it holds.
     mapping(uint256 => mapping(address => uint256)) private _contentNumber;
 
@@ -27,36 +34,72 @@ contract AccessRightNFT is ERC721, ERC2981PerTokenRoyalties, Ownable {
     {}
 
     /// @inheritdoc	ERC165
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC2981PerTokenRoyalties)
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721)
     returns (bool)
     {
         return
         ERC721.supportsInterface(interfaceId) ||
-        ERC2981PerTokenRoyalties.supportsInterface(interfaceId);
+        interfaceId == type(IERC2981Royalties).interfaceId;
     }
 
-    event register(address indexed author, uint indexed contentId);
+    event Register(address indexed author, uint indexed contentId);
+    event SetPrice(uint256 indexed contentId, uint256 price);
+    event SetRoyalty(uint256 indexed contentId, uint256 royalty, address receiver);
 
-    function registerContent() public returns (uint256) {
+    function register(uint256 price, uint256 royalty) public {
+        register(price, royalty, msg.sender);
+    }
+
+    function register(uint256 price, uint256 royalty, address royaltyReceiver) public {
         _authors[_nextContentId] = msg.sender;
-        emit register(msg.sender, _nextContentId);
+        emit Register(msg.sender, _nextContentId);
+
+        if(price != 0) {
+            _prices[_nextContentId] = price;
+            emit SetPrice(_nextContentId, price);
+        }
+
+        if(royalty != 0) {
+            _royalties[_nextContentId] = royalty;
+            _receivers[_nextContentId] = royaltyReceiver;
+            emit SetRoyalty(_nextContentId, royalty, royaltyReceiver);
+        }
+
         _nextContentId += 1;
-        return _nextContentId - 1;
+    }
+
+    function setPrice(uint256 contentId, uint256 price) public {
+        require(msg.sender == _authors[contentId], "you are not the author");
+        _prices[contentId] = price;
+        emit SetPrice(contentId, price);
+    }
+
+    function setRoyalty(uint256 contentId, uint256 royalty, address receiver) public {
+        require(msg.sender == _authors[contentId], "you are not the author");
+        if(_royalties[contentId] != royalty) {
+            _royalties[contentId] = royalty;
+        }
+        if(_receivers[contentId] != receiver) {
+            _receivers[contentId] = receiver;
+        }
+        emit SetRoyalty(contentId, royalty, receiver);
     }
 
     /// @notice Mint one token to `to`
     /// @param contentId an id of the content
     /// @param to the recipient of the token
-    /// @param royaltyRecipient the recipient for royalties (if royaltyValue > 0)
-    /// @param royaltyValue the royalties asked for (EIP2981)
     function mint(
         uint256 contentId,
-        address to,
-        address royaltyRecipient,
-        uint256 royaltyValue
-    ) external {
+        address to
+    ) payable external {
         require(contentId < _nextContentId, "content not existed");
-        require(_authors[contentId] == msg.sender, "you aren't the author");
+
+        bool isAuthor = _authors[contentId] == msg.sender;
+        require(_prices[contentId] <= msg.value || isAuthor, "you are not the author and msg.value not enough");
+
+        if(!isAuthor) {
+            payable(_authors[contentId]).transfer(msg.value);
+        }
 
         uint256 tokenId = _nextTokenId;
 
@@ -65,50 +108,14 @@ contract AccessRightNFT is ERC721, ERC2981PerTokenRoyalties, Ownable {
 
         _safeMint(to, tokenId, '');
 
-        if (royaltyValue > 0) {
-            _setTokenRoyalty(tokenId, royaltyRecipient, royaltyValue);
-        }
-
         _nextTokenId = tokenId + 1;
     }
 
-    /// @notice Mint several tokens at once
-    /// @param contentId an id of the content
-    /// @param recipients an array of recipients for each token
-    /// @param royaltyRecipients an array of recipients for royalties (if royaltyValues[i] > 0)
-    /// @param royaltyValues an array of royalties asked for (EIP2981)
-    function mintBatch(
-        uint256 contentId,
-        address[] memory recipients,
-        address[] memory royaltyRecipients,
-        uint256[] memory royaltyValues
-    ) external {
-        uint256 tokenId = _nextTokenId;
-        require(
-            recipients.length == royaltyRecipients.length &&
-            recipients.length == royaltyValues.length,
-            'ERC721: Arrays length mismatch'
-        );
-        require(contentId < _nextContentId, "content not existed");
-        require(_authors[contentId] == msg.sender, "you aren't the author");
-
-        for (uint256 i; i < recipients.length; i++) {
-            _tokens[contentId].push(_nextTokenId);
-            _contents[tokenId] = contentId;
-
-            _safeMint(recipients[i], tokenId, '');
-            if (royaltyValues[i] > 0) {
-                _setTokenRoyalty(
-                    tokenId,
-                    royaltyRecipients[i],
-                    royaltyValues[i]
-                );
-            }
-
-            tokenId++;
-        }
-
-        _nextTokenId = tokenId;
+    function royaltyInfo(uint256 tokenId, uint256 value) external view override
+    returns (address receiver, uint256 royaltyAmount)
+    {
+        uint256 contentId = _contents[tokenId];
+        return (_receivers[contentId], (value * _royalties[contentId]) / 10000);
     }
 
     function setBaseURI(string memory baseURI_) public onlyOwner() {
@@ -130,6 +137,10 @@ contract AccessRightNFT is ERC721, ERC2981PerTokenRoyalties, Ownable {
 
     function numberOfTokens() public view returns (uint256) {
         return _nextTokenId;
+    }
+
+    function priceOf(uint256 contentId) public view returns (uint256) {
+        return _prices[contentId];
     }
 
     /**
