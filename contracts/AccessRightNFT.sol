@@ -26,6 +26,8 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     mapping(uint256 => uint256) private _royalties;
     // mapping from content Id to royalty receiver
     mapping(uint256 => address) private _receivers;
+    // mapping from tokenId to possessor
+    mapping(uint256 => address) private _possessors;
     // mapping from content Id to mapping address to the number of content it holds.
     mapping(uint256 => mapping(address => uint256)) private _contentNumber;
 
@@ -95,7 +97,8 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
         require(contentId < _nextContentId, "content not existed");
 
         bool isAuthor = _authors[contentId] == msg.sender;
-        require(_prices[contentId] <= msg.value || isAuthor, "you are not the author and msg.value not enough");
+        require(_prices[contentId] == msg.value || isAuthor,
+            "you are not the author and msg.value is not equal to the price");
 
         if(!isAuthor) {
             payable(_authors[contentId]).transfer(msg.value);
@@ -109,6 +112,14 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
         _safeMint(to, tokenId, '');
 
         _nextTokenId = tokenId + 1;
+    }
+
+    function lend(uint256 tokenId, address to) public {
+        require(ownerOf(tokenId) == msg.sender, "you are not the owner");
+        require(_possessors[tokenId] != to, "the account already possess the token");
+        _contentNumber[_contents[tokenId]][_possessors[tokenId]]--;
+        _contentNumber[_contents[tokenId]][to]++;
+        _possessors[tokenId] = to;
     }
 
     function royaltyInfo(uint256 tokenId, uint256 value) external view override
@@ -164,9 +175,10 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
         uint256 tokenId
     ) internal override {
         if(from != address(0)) {
-            _contentNumber[_contents[tokenId]][from] -= 1;
+            _contentNumber[_contents[tokenId]][_possessors[tokenId]] -= 1;
         }
         if(to != address(0)) {
+            _possessors[tokenId] = to;
             _contentNumber[_contents[tokenId]][to] += 1;
         }
     }

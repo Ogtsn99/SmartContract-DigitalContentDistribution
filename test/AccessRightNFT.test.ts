@@ -115,6 +115,28 @@ describe("ART", function () {
     await art.connect(receiver).transferFrom(receiverAddress, author2Address, 1);
     assert.equal(false, await art.isAccessible(buyer2Address, 1));
     assert.equal(true, await art.isAccessible(author2Address, 1));
+    assert.isFalse(await art.isAccessible(receiverAddress, 1));
+  })
+  
+  it('lend function', async()=> {
+    let tx = await art.connect(author)['register(uint256,uint256)'](500, 500);
+    let receipt: ContractReceipt = await tx.wait();
+    let contentId = receipt.events[0].args.contentId;
+    tx = await art.connect(buyer).mint(2, buyerAddress, {value: 500});
+    receipt = await tx.wait();
+    let tokenId = receipt.events[0].args.tokenId.toString();
+    
+    // rent to receiver
+    await art.connect(buyer).lend(2, receiverAddress);
+    assert.isTrue(await art.isAccessible(receiverAddress, contentId));
+    assert.isFalse(await art.isAccessible(buyerAddress, contentId));
+    
+    // only token owner can excute lend
+    await assertPromiseThrow(art.connect(receiver).lend(2, buyer2Address));
+    
+    await art.connect(buyer).lend(2, buyerAddress);
+    assert.isFalse(await art.isAccessible(receiverAddress, contentId));
+    assert.isTrue(await art.isAccessible(buyerAddress, contentId));
   })
   
 });

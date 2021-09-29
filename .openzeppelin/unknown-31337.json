@@ -7,8 +7,8 @@
       "hash": "0x9a25f7d14a059003ecc42356add0fe28ca37ac6c62966bbf9cd76939393b5cd0",
       "type": 0,
       "accessList": null,
-      "blockHash": "0xc2cb3be757e8a8f33c6674243a9fd81834e8c613bcc673dfb2dfef1091950aa9",
-      "blockNumber": 16,
+      "blockHash": "0xdc8ab51c82672ff8f11977f868a7fa1e6c66388d377df8fe44434d80c3945774",
+      "blockNumber": 21,
       "transactionIndex": 0,
       "confirmations": 1,
       "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
@@ -129,9 +129,9 @@
         }
       }
     },
-    "45b954561d2cd1543fcf1cfd06ca24948cc37f9aca2b823c278cf99bdd3a0b06": {
+    "6e47a22d759633371a6030a44c9bbbe5bb8c18ca1d7e64d757e2dba6a1a32bcc": {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xa8b62c57847ba69ca8b9d25e0cab3524e9809c8a2bf385b38dbc0f9fd950ac2a",
+      "txHash": "0x7b036b9aade33ef11727f14ae2b569c38acc7d8d811276a80c9b8bf1dcfdbf54",
       "layout": {
         "storage": [
           {
@@ -155,7 +155,7 @@
           {
             "contract": "AccessRightMarket",
             "label": "art",
-            "type": "t_contract(AccessRightNFT)2404",
+            "type": "t_contract(AccessRightNFT)2469",
             "src": "contracts/AccessRightMarket.sol:13"
           }
         ],
@@ -166,7 +166,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(AccessRightNFT)2404": {
+          "t_contract(AccessRightNFT)2469": {
             "label": "contract AccessRightNFT"
           },
           "t_bool": {

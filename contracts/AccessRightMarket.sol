@@ -28,7 +28,7 @@ contract AccessRightMarket is Initializable {
   // with royalty
   function buyNFT(uint256 tokenId) public payable {
     require(art.ownerOf(tokenId) != msg.sender, "you have already own it");
-    require(msg.value >= _prices[tokenId], "not enough ether");
+    require(msg.value == _prices[tokenId], "msg.value is not equal to the price");
 
     (address receiver, uint256 royalty) = art.royaltyInfo(tokenId, msg.value);
 
