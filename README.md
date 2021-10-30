@@ -1,10 +1,11 @@
 #READ ME
 
-## 使用したリポジトリ
+## 使用、参考したサイト
 
 https://github.com/dievardump/EIP2981-implementation
 https://github.com/OpenZeppelin/openzeppelin-contracts
 https://github.com/symfoni/hardhat-react-boilerplate
+https://www.hiramine.com/programming/videochat_webrtc/index.html
 
 ## CHANGE LOG
 
@@ -22,3 +23,7 @@ https://github.com/symfoni/hardhat-react-boilerplate
   ことができるように。NFT自体はownerがもったまま。
   また、ownerが強制的に貸したNFTを回収することができ、
   借りパクされる 心配はない
+  
+10/30 
+  * frontend、手動でSDPを交換しWebRTC接続、dataChannelを
+    使ってのファイルの転送まで
