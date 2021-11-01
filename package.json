@@ -25,6 +25,7 @@
     "typescript": "^4.1.2"
   },
   "scripts": {
+    "start": "nodemon index.js",
     "test": "npx hardhat test",
     "node": "npx hardhat node --watch",
     "frontend": "cd frontend && npm run start"
@@ -38,5 +39,8 @@
   "bugs": {
     "url": "https://github.com/symfoni/hardhat-react-boilerplate/issues"
   },
-  "homepage": "https://github.com/symfoni/hardhat-react-boilerplate#readme"
+  "homepage": "https://github.com/symfoni/hardhat-react-boilerplate#readme",
+  "dependencies": {
+    "socket.io": "^4.3.1"
+  }
 }

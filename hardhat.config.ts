@@ -48,6 +48,14 @@ const config: HardhatUserConfig = {
     //   ],
     // },
   },
+  // ディレクトリの構成を変えようとしたらhardhat-reactに怒られた。
+  // paths: {
+  //   deployments: "./artifacts/deployments"
+  // },
+  // typechain: {
+  //   "outDir": "./typechain",
+  //   "target": "ethers-v5"
+  // },
   solidity: {
     compilers: [
       {

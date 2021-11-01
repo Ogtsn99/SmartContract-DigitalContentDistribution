@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { AccessRightNFTContext } from "./../hardhat/SymfoniContext";
+import { AccessRightNFTContext } from "../hardhat/SymfoniContext";
+
+import socketIOClient, { Socket } from "socket.io-client";
 let FileSaver = require('file-saver');
 
 interface Props {}
@@ -20,8 +22,10 @@ let bufferList: ArrayBuffer[] = [];
 let byteSize: number;
 let byteCount: number;
 
+let socket: Socket;
+
 export const Main: React.FC<Props> = () => {
-    const ART = useContext(AccessRightNFTContext)
+    const ART = useContext(AccessRightNFTContext);
     const [offerSdpInput, setOfferSdpInput] = useState("");
     const [answerSdpInput, setAnswerSdpInput] = useState("");
     
@@ -50,9 +54,13 @@ export const Main: React.FC<Props> = () => {
     }
     
     useEffect(() => {
+        if(!socket)
+            socket = socketIOClient("http://localhost:5000");
+        console.log("use Effect");
+        
         const doAsync = async () => {
-            if (!ART.instance) return
-            console.log("ART is deployed at ", ART.instance.address)
+            if (!ART.instance) return;
+            console.log("ART is deployed at ", ART.instance.address);
         };
         doAsync();
     }, []);

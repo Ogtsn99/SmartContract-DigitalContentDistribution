@@ -27,3 +27,7 @@ https://www.hiramine.com/programming/videochat_webrtc/index.html
 10/30 
   * frontend、手動でSDPを交換しWebRTC接続、dataChannelを
     使ってのファイルの転送まで
+11/1
+  * serverを立ててみる。socket.ioでfront側との接続まで確認。
+    また、開発環境を整える。
+  * deploy.tsの修正。

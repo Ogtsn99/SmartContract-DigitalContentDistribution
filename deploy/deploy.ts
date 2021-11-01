@@ -1,6 +1,5 @@
 // @ts-ignore
-const { ethers, upgrades } = require("hardhat");
-import { Signer } from "ethers";
+import { ContractFactory } from "@ethersproject/contracts";
 
 module.exports = async ({
 	                        getNamedAccounts,
@@ -9,11 +8,18 @@ module.exports = async ({
 	                        getUnnamedAccounts,
                         }) => {
 	const { deploy } = deployments;
+	
 	const { deployer } = await getNamedAccounts();
 	
-	const ART = await ethers.getContractFactory("AccessRightToken");
-	const art = await ART.deploy("Access Right Token", "ART");
+	let result = await deploy("AccessRightNFT", {
+			from: deployer,
+		args: ["AccessRightToken", "ART"]
+		}
+	);
 	
-	console.log("art deployed to:", art.address);
-	
+	await deploy("AccessRightMarket", {
+		from: deployer,
+		args: [result.address],
+		proxy: true
+	})
 };

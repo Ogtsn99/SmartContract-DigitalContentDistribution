@@ -4,8 +4,6 @@ import { ethers, upgrades } from "hardhat";
 import { BigNumber, ContractReceipt, Signer } from "ethers";
 import { assert, expect } from "chai";
 import { ContractFactory } from "@ethersproject/contracts";
-import { AccessRightNFT } from "../frontend/src/hardhat/typechain";
-import { makeAccount } from "hardhat/internal/hardhat-network/provider/utils/makeAccount";
 
 async function assertPromiseThrow(p: Promise<void>) {
 	let error;
@@ -52,7 +50,7 @@ describe("Market", function () {
 		art = await AccessRightNFT.deploy("AccessRightToken", "ART");
 	
 		const AccessRightMarket = await ethers.getContractFactory("AccessRightMarket", deployer);
-		market = await upgrades.deployProxy(AccessRightMarket, [art.address.toString()])
+		market = await upgrades.deployProxy(AccessRightMarket, [art.address.toString()]);
 	});
 	
 	it("can set Price", async()=> {
