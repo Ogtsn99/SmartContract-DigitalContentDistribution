@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { AccessRightNFTContext } from "../hardhat/SymfoniContext";
-
+import { AccessRightNFTContext, CurrentAddressContext, SignerContext } from "../hardhat/SymfoniContext";
+import { ethers } from "ethers";
 import socketIOClient, { Socket } from "socket.io-client";
 let FileSaver = require('file-saver');
 
@@ -28,6 +28,9 @@ export const Main: React.FC<Props> = () => {
     const ART = useContext(AccessRightNFTContext);
     const [offerSdpInput, setOfferSdpInput] = useState("");
     const [answerSdpInput, setAnswerSdpInput] = useState("");
+    const [role, setRole] = useState("before Register");
+    const [currentAddress] = useContext(CurrentAddressContext);
+    const [signer] = useContext(SignerContext);
     
     let file: File | null;
     let reader:FileReader = new window.FileReader();
@@ -54,9 +57,18 @@ export const Main: React.FC<Props> = () => {
     }
     
     useEffect(() => {
-        if(!socket)
+        if(!socket) {
             socket = socketIOClient("http://localhost:5000");
-        console.log("use Effect");
+            socket.on("response", (data) => {
+                console.log(data.message);
+                
+                if(data.message === "new Node created and settings finished") {
+                    initPeerConnection();
+                    console.log(pc.localDescription);
+                    socket.emit("setOfferSDP", {offerSDP: pc.localDescription});
+                }
+            });
+        }
         
         const doAsync = async () => {
             if (!ART.instance) return;
@@ -68,11 +80,11 @@ export const Main: React.FC<Props> = () => {
     function initPeerConnection() {
         pc = new RTCPeerConnection(rtcConfig);
         setupRTCPeerConnectionEventHandler(pc);
+        createDataChannel(pc);
     }
     
     function createDataChannel(pc: RTCPeerConnection) {
         dataChannel = pc.createDataChannel("LABEL", dataChannelOption);
-    
         setDataChannelEventHandler(dataChannel);
     }
     
@@ -127,7 +139,7 @@ export const Main: React.FC<Props> = () => {
             console.log( "Event : Negotiation needed" );
             offerSideOfferSDP = await pc.createOffer();
             await pc.setLocalDescription(offerSideOfferSDP);
-            console.log("create offerSDP");
+            socket.emit("setOfferSDP", {offerSDP: offerSideOfferSDP});
         };
     
         // ICE candidate イベントが発生したときのイベントハンドラ
@@ -310,11 +322,23 @@ export const Main: React.FC<Props> = () => {
     
     }
     
+    async function registerAsNode() {
+        let signature = await signer?.signMessage(socket.id);
+        socket.emit("register", {signature: signature, role: "Node"})
+    }
+    
+    function sendOfferSDP() {
+    
+    }
+    
     return (
         <div>
             <p>NyaHello</p>
+            <p>{currentAddress}</p>
+            
+            <button onClick={registerAsNode}>Become a Node</button>
     
-            <button onClick={()=>{initPeerConnection(); createDataChannel(pc);}}>create PC and OfferSDP</button>
+            <button onClick={()=>{initPeerConnection();}}>create PC and OfferSDP</button>
             
             <form onSubmit={submitOfferSDP}>
                 <label>

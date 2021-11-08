@@ -28,7 +28,7 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     mapping(uint256 => address) private _receivers;
     // mapping from tokenId to possessor
     mapping(uint256 => address) private _possessors;
-    // mapping from content Id to mapping address to the number of content it holds.
+    // mapping from content Id to mapping from address to the number of content it holds.
     mapping(uint256 => mapping(address => uint256)) private _contentNumber;
 
     constructor(string memory name_, string memory symbol_)

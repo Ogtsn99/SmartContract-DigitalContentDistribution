@@ -25,10 +25,11 @@
     "typescript": "^4.1.2"
   },
   "scripts": {
-    "start": "nodemon index.js",
+    "start": "nodemon",
     "test": "npx hardhat test",
     "node": "npx hardhat node --watch",
-    "frontend": "cd frontend && npm run start"
+    "frontend": "cd frontend && npm run start",
+    "run": "nodemon"
   },
   "repository": {
     "type": "git",
@@ -41,6 +42,7 @@
   },
   "homepage": "https://github.com/symfoni/hardhat-react-boilerplate#readme",
   "dependencies": {
+    "dotenv": "^10.0.0",
     "socket.io": "^4.3.1"
   }
 }

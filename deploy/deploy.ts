@@ -17,9 +17,20 @@ module.exports = async ({
 		}
 	);
 	
-	await deploy("AccessRightMarket", {
+	console.log("AccessRightNFT deployed. address =", result.address);
+	
+	result = await deploy("AccessRightMarket", {
 		from: deployer,
 		args: [result.address],
 		proxy: true
+	});
+	
+	console.log("AccessRightMarket deployed. address =", result.address);
+	
+	result = await deploy("FileSharingToken", {
+		from: deployer,
+		args: ["FileSharingToken", "FST", "10000000000000000000000", true]
 	})
+	
+	console.log("FileSharingToken deployed. address =", result.address);
 };

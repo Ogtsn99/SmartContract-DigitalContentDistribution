@@ -1,0 +1,33 @@
+@startuml sample
+
+participant Client
+participant Server
+participant Node
+
+activate Server
+activate Client
+activate Node
+Node<->Server: start socket connecion
+Node->Server: Signature(socketID), ROLE(=NODE)
+Server->Server: inspect Signature, create Node instance
+Server->Node: OK
+Node->Server: contentID
+Server->Server: check NFT, node.addContentId()
+Node->Server: Offer SDP
+Server->Server: set OfferSDP, set status("available")
+Client<->Server: start socket connection
+Client->Server: Signature(socketId), ROLE=(CLIENT)
+Server->Server: inspect Signature, NFT
+Server->Client: OK
+Client->Server: send ERC20 Token
+Client->Server: request start download
+Server->Server: check payment, select node
+Server->Client: Offer SDP, node's EOA
+Client->Server: Answer SDP
+Server->Node: Answer SDP
+Client<->Node: start WebRTC connection
+Node->Client: Send Content Data
+Client->Client: check Data∂
+Client->Server: if OK setTokenTo(contentId, EOA)
+Node->Server: withdraw ERC20 Token
+@enduml
