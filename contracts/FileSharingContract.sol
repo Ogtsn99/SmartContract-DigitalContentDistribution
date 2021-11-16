@@ -2,12 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import '@openzeppelin/contracts/access/Ownable.sol';
 import "./AccessRightNFT.sol";
 import "./FileSharingToken.sol";
 
-contract FileSharingContract is Initializable {
+contract FileSharingContract {
     // mapping from content Id to download fee
     mapping(uint256 => uint256) private _downloadFees;
     // mapping from client's address to mapping from contentId to remaining count
@@ -22,7 +20,7 @@ contract FileSharingContract is Initializable {
     AccessRightNFT art;
     FileSharingToken fst;
 
-    function initialize(address artAddress, address fstAddress, address server, uint8 downloadLimit) public initializer {
+    constructor(address artAddress, address fstAddress, address server, uint8 downloadLimit) {
         art = AccessRightNFT(artAddress);
         fst = FileSharingToken(fstAddress);
         _server = server;

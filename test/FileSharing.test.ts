@@ -65,6 +65,7 @@ describe("FileSharingContract", function () {
 		// it fails when download fee is 0
 		await assertPromiseThrow(fsc.connect(client).payDownloadFee(0));
 		assert.equal(await fsc.paymentOf(clientAddress, 0), 0);
+		
 		await fsc.connect(author).setDownloadFee(0, 100);
 		await fst.connect(client).approve(fsc.address, 250);
 		await fsc.connect(client).payDownloadFee(0);

@@ -20,6 +20,8 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     mapping(uint256 => uint256[]) private _tokens;
     // mapping from token Id to content Id
     mapping(uint256 => uint256) private _contents;
+    // mapping from contentId to content SHA256 hash
+    mapping(uint256 => string) private _contentHashes;
     // mapping from content Id to price you need to pay when minting
     mapping(uint256 => uint256) private _prices;
     // mapping from content Id to royalty
@@ -47,14 +49,20 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     event Register(address indexed author, uint indexed contentId);
     event SetPrice(uint256 indexed contentId, uint256 price);
     event SetRoyalty(uint256 indexed contentId, uint256 royalty, address receiver);
+    event SetContentHash(uint256 indexed contentId, string hash);
 
     function register(uint256 price, uint256 royalty) public {
-        register(price, royalty, msg.sender);
+        register(price, royalty, msg.sender, "");
     }
 
-    function register(uint256 price, uint256 royalty, address royaltyReceiver) public {
+    function register(uint256 price, uint256 royalty, address royaltyReceiver, string memory hash) public {
         _authors[_nextContentId] = msg.sender;
         emit Register(msg.sender, _nextContentId);
+        bytes memory hashBytes = bytes(hash);
+        if(hashBytes.length != 0) {
+            _contentHashes[_nextContentId] = hash;
+            emit SetContentHash(_nextContentId, hash);
+        }
 
         if(price != 0) {
             _prices[_nextContentId] = price;
@@ -85,6 +93,12 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
             _receivers[contentId] = receiver;
         }
         emit SetRoyalty(contentId, royalty, receiver);
+    }
+
+    function setContentHash(uint256 contentId, string memory hash) public {
+        require(msg.sender == _authors[contentId], "you are not the author");
+        _contentHashes[_nextContentId] = hash;
+        emit SetContentHash(contentId, hash);
     }
 
     /// @notice Mint one token to `to`
@@ -152,6 +166,10 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
 
     function priceOf(uint256 contentId) public view returns (uint256) {
         return _prices[contentId];
+    }
+
+    function hashOf(uint contentId) public view returns (string memory) {
+        return _contentHashes[contentId];
     }
 
     /**

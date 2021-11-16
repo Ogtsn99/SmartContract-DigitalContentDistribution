@@ -7,7 +7,7 @@
       "hash": "0xb620c6749dc8b2467a9928cd6ddf1059a1a14bf0cb001ee5426f250e0c38efff",
       "type": 0,
       "accessList": null,
-      "blockHash": "0xf26220470a431f4238ee0f1aee34bbb1f631457227a60c341a3f07ce831af30b",
+      "blockHash": "0x3ef3f0014de1df8dd61d5359515b1b3bd22218f0dd2e50196178996eebb9d776",
       "blockNumber": 22,
       "transactionIndex": 0,
       "confirmations": 1,
@@ -171,7 +171,7 @@
     },
     "6e47a22d759633371a6030a44c9bbbe5bb8c18ca1d7e64d757e2dba6a1a32bcc": {
       "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0x2de790197fdac1253f0350dc785ac506192ea03a0297edf078dc0e707535c3a1",
+      "txHash": "0x17d31407c2bb3f37301589a2270dbf7e00968ed34d609d70eb55a6c2043f1144",
       "layout": {
         "storage": [
           {
@@ -195,7 +195,7 @@
           {
             "contract": "AccessRightMarket",
             "label": "art",
-            "type": "t_contract(AccessRightNFT)3118",
+            "type": "t_contract(AccessRightNFT)3184",
             "src": "contracts/AccessRightMarket.sol:13"
           }
         ],
@@ -206,7 +206,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(AccessRightNFT)3118": {
+          "t_contract(AccessRightNFT)3184": {
             "label": "contract AccessRightNFT"
           },
           "t_bool": {
@@ -217,7 +217,7 @@
     },
     "597b8e06a959440e7dcd4f3c314e466d57edde1911c63213d8fe685af0c32eb4": {
       "address": "0x2910E325cf29dd912E3476B61ef12F49cb931096",
-      "txHash": "0xcf58f56522abf8b4166798babb67eca1782cf249d2f23113abd3cae2e1ceb1ba",
+      "txHash": "0x3939ef02aa064b70a2bf27883c35c75246b92de030e44b11ebad647a2a2fabfb",
       "layout": {
         "storage": [
           {
@@ -271,13 +271,13 @@
           {
             "contract": "FileSharingContract",
             "label": "art",
-            "type": "t_contract(AccessRightNFT)3118",
+            "type": "t_contract(AccessRightNFT)3184",
             "src": "contracts/FileSharingContract.sol:22"
           },
           {
             "contract": "FileSharingContract",
             "label": "fst",
-            "type": "t_contract(FileSharingToken)3798",
+            "type": "t_contract(FileSharingToken)3864",
             "src": "contracts/FileSharingContract.sol:23"
           }
         ],
@@ -309,10 +309,10 @@
           "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
             "label": "mapping(address => mapping(uint256 => uint256))"
           },
-          "t_contract(AccessRightNFT)3118": {
+          "t_contract(AccessRightNFT)3184": {
             "label": "contract AccessRightNFT"
           },
-          "t_contract(FileSharingToken)3798": {
+          "t_contract(FileSharingToken)3864": {
             "label": "contract FileSharingToken"
           },
           "t_bool": {

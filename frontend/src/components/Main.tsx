@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AccessRightNFTContext, CurrentAddressContext, SignerContext } from "../hardhat/SymfoniContext";
 import { ethers } from "ethers";
 import socketIOClient, { Socket } from "socket.io-client";
+import { sha256 } from 'js-sha256';
 let FileSaver = require('file-saver');
 
 interface Props {}
@@ -13,9 +14,8 @@ let pc: RTCPeerConnection;
 
 let dataChannel: RTCDataChannel;
 
-let dataChannelOption = {
-    ordered: true,
-    maxRetransmits: 3000
+let dataChannelOption: RTCDataChannelInit = {
+    maxPacketLifeTime: 1000
 }
 
 let bufferList: ArrayBuffer[] = [];
@@ -24,62 +24,60 @@ let byteCount: number;
 
 let socket: Socket;
 
+let buffer: ArrayBuffer;
+let role = "";
+
 export const Main: React.FC<Props> = () => {
     const ART = useContext(AccessRightNFTContext);
     const [offerSdpInput, setOfferSdpInput] = useState("");
     const [answerSdpInput, setAnswerSdpInput] = useState("");
-    const [role, setRole] = useState("before Register");
+    const [hash, setHash] = useState("");
+    const [role_render, setRole] = useState("before Register");
     const [currentAddress] = useContext(CurrentAddressContext);
     const [signer] = useContext(SignerContext);
     
     let file: File | null;
+    let contentId = 0;
+    let contentIdToRequest = 0;
     let reader:FileReader = new window.FileReader();
     
     reader.onload = (event) => {
-        let buffer: ArrayBuffer;
         if(event.target) buffer = event.target.result as ArrayBuffer;
         else return ;
-        
-        let CHUNK_LEN = 64000;
+        setHash(sha256(buffer));
+    }
+    
+    function sendFile() {
+        if(!dataChannel) {
+            alert("data channel is not created");
+            return ;
+        }
         let length = buffer.byteLength;
-        let n = (length + CHUNK_LEN - 1) / CHUNK_LEN | 0;
     
         dataChannel.send("byteLength-" + length);
-        
-        for (let i = 0; i < n; i++) {
-            let start = i * CHUNK_LEN;
-            let end = start + CHUNK_LEN;
-            
-            console.log(start, '-', end - 1);
-            
-            dataChannel.send(buffer.slice(start, end));
-        }
     }
     
     useEffect(() => {
         if(!socket) {
             socket = socketIOClient("http://localhost:5000");
             socket.on("response", (data) => {
-                console.log(data.message);
-                
                 if(data.message === "new Node created and settings finished") {
+                    console.log("new Node created and settings finished");
                     initPeerConnection();
-                    console.log(pc.localDescription);
-                    socket.emit("setOfferSDP", {offerSDP: pc.localDescription});
                 }
             });
+    
+            socket.on("error", (data) => {
+                console.log(data);
+                alert("error: " + data.error);
+            });
         }
-        
-        const doAsync = async () => {
-            if (!ART.instance) return;
-            console.log("ART is deployed at ", ART.instance.address);
-        };
-        doAsync();
     }, []);
     
     function initPeerConnection() {
         pc = new RTCPeerConnection(rtcConfig);
         setupRTCPeerConnectionEventHandler(pc);
+        console.log("create datachannel!")
         createDataChannel(pc);
     }
     
@@ -93,24 +91,39 @@ export const Main: React.FC<Props> = () => {
             console.log("Data Channel Error:", error);
         };
         
-        dataChannel.onmessage = function (event) {
-            console.log(typeof event.data)
+        dataChannel.onmessage = async function (event) {
+            console.log("message received", event.data);
             if(typeof event.data == "string") {
                 let message:string = event.data;
                 let m = message.split('-');
-                console.log(m);
+                
                 if(m[0] === "byteLength") {
                     byteSize = parseInt(m[1]);
                     byteCount = 0;
+                    console.log("byteSize", byteSize);
+                    dataChannel.send("require-"+byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+                } else if(m[0] == "require" /*&& role == "Node"*/) {
+                    // TODO: bufferは複数登録できるようになるのでどのコンテンツを要求しているのかを含むようにする必要あり
+                    let start = parseInt(m[1]), end = Math.min(buffer.byteLength,  parseInt(m[2]));
+                    console.log("start=", start, "end=", end);
+                    dataChannel.send(buffer.slice(start, end));
                 }
             } else {
-               
+                console.log("byteSize=", byteSize);
                 bufferList.push(event.data);
-                
                 byteCount += event.data.byteLength;
+                console.log("byteCount=", byteCount, "byteSize=", byteSize);
                 
                 if(byteCount === byteSize) {
-                    FileSaver.saveAs(new Blob(bufferList, {type: "octet/stream"}), "yayFile");
+                    let blob = new Blob(bufferList, {type: "octet/stream"});
+                    let buffer = await blob.arrayBuffer();
+                    console.log(sha256(buffer));
+                    // TODO: ハッシュ値を確認したらノードをapproveする
+                    dataChannel.send("all data downloaded. Thank you!");
+                    FileSaver.saveAs(blob, "yayFile");
+                } else {
+                    console.log("require-"+byteCount+ "-" + byteCount + 64000);
+                    dataChannel.send("require-"+byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
                 }
             }
         };
@@ -139,7 +152,6 @@ export const Main: React.FC<Props> = () => {
             console.log( "Event : Negotiation needed" );
             offerSideOfferSDP = await pc.createOffer();
             await pc.setLocalDescription(offerSideOfferSDP);
-            socket.emit("setOfferSDP", {offerSDP: offerSideOfferSDP});
         };
     
         // ICE candidate イベントが発生したときのイベントハンドラ
@@ -187,8 +199,16 @@ export const Main: React.FC<Props> = () => {
                 // Trickle ICEの場合は、何もしない
             
                 // Offer側のOfferSDP用のテキストエリアに貼付
+                console.log(role);
                 console.log( "- Set OfferSDP in textarea" );
                 console.log(pc.localDescription?.sdp);
+                if(role == "Node")
+                    socket.emit("setOfferSDP", {offerSDP: pc.localDescription?.sdp});
+                else if(role == "Client") {
+                    socket.emit("answerSDP", {answerSDP: pc.localDescription?.sdp});
+                } else {
+                    alert("role: " + role);
+                }
             }
         };
     
@@ -256,6 +276,11 @@ export const Main: React.FC<Props> = () => {
             // DataChannelオブジェクトのイベントハンドラの構築
             console.log( "Call : setupDataChannelEventHandler()" );
             setDataChannelEventHandler(dataChannel);
+    
+            if(role==="Node") {
+                console.log("send byteLength", buffer.byteLength);
+                dataChannel.send("byteLength-" + buffer.byteLength);
+            }
         }
     
     }
@@ -273,14 +298,10 @@ export const Main: React.FC<Props> = () => {
             sdp: offerSdpInput + '\n', // <- this \n is necessary, idk why tho
             type: "offer"
         }
-        offerSideOfferSDP = remoteDescription;
         
         await pc.setRemoteDescription(remoteDescription);
         let answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        
-        console.log("create answer SDP");
-        console.log(answer.sdp);
     }
     
     async function submitAnswerSDP(event: any) {
@@ -318,17 +339,98 @@ export const Main: React.FC<Props> = () => {
             reader.readAsArrayBuffer(file);
     }
     
-    function sendFile() {
+    function onContentIdInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+        e.preventDefault();
+        contentId = parseInt(e.target.value);
+    }
     
+    function onContentIdToRequestInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+        e.preventDefault();
+        contentIdToRequest = parseInt(e.target.value);
     }
     
     async function registerAsNode() {
+        role = "Node";
+        console.log("roleをnodeに", role);
+        initPeerConnection();
         let signature = await signer?.signMessage(socket.id);
+        setRole("Node");
+        
+        socket.on("clientInfo", async (data)=> {
+            // TODO: 断るケースも作る
+            console.log("client Info きた!", data);
+            socket.emit("approve", {account: data.account});
+        })
+        
+        socket.on("request", async(data)=> {
+            console.log(data);
+    
+            let remoteDescription: RTCSessionDescriptionInit =
+              {
+                  sdp: data.answerSDP,
+                  type: "answer"
+              }
+            await pc.setRemoteDescription(remoteDescription);
+            
+            console.log(data.answerSDP);
+            // dataChannel.ondatachannelでコンテンツの長さを伝える
+        });
+        
         socket.emit("register", {signature: signature, role: "Node"})
     }
     
-    function sendOfferSDP() {
+    async function registerAsClient() {
+        role = "Client";
+        let signature = await signer?.signMessage(socket.id);
+        setRole("Client");
+        socket.on("nodeInfo", async (data) => {
+            initPeerConnection();
+            
+            offerSideOfferSDP = data.offerSDP;
+            let remoteDescription: RTCSessionDescriptionInit =
+              {
+                  sdp: data.offerSDP,
+                  type: "offer"
+              }
+            
+            await pc.setRemoteDescription(remoteDescription);
+            let answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+        });
+        socket.emit("register", {signature: signature, role: "Client"})
+    }
     
+    async function registerContent(e: any) {
+        e.preventDefault();
+        console.log(role)
+        if(role != "Node") {
+            alert("You are not a Node");
+            return ;
+        }
+        
+        let hasRight = await ART.instance?.isAccessible(currentAddress, contentId);
+        if(!hasRight) {
+            alert("You don't own the content(id = "+ contentId + ")");
+            return ;
+        }
+       
+        // TODO: コメントを外し、ハッシュチェックをするようにする
+        /*
+        if(hash !== await ART.instance?.hashOf(contentId)) {
+            alert("the file hash is wrong");
+            return ;
+        }*/
+        
+        socket.emit("setContent", {contentId: contentId});
+    }
+    
+    function requestContent(e: any) {
+        e.preventDefault();
+        socket.emit("requestContent", {contentId: contentIdToRequest});
+    }
+    
+    function checkBufferedAmount() {
+        console.log(dataChannel.bufferedAmount);
     }
     
     return (
@@ -337,28 +439,49 @@ export const Main: React.FC<Props> = () => {
             <p>{currentAddress}</p>
             
             <button onClick={registerAsNode}>Become a Node</button>
+            <button onClick={registerAsClient}>Become a Client</button>
+            <form onSubmit={requestContent}>
+                <label >
+                    Content Id:
+                    <input type="number" onChange={onContentIdToRequestInputChange}/>
+                </label>
+                <input type="submit" value="Submit"/>
+            </form>
     
             <button onClick={()=>{initPeerConnection();}}>create PC and OfferSDP</button>
             
             <form onSubmit={submitOfferSDP}>
                 <label>
-                    <textarea name="name" id="" value={offerSdpInput} onChange={changeOfferSdpInput}></textarea>
+                    <textarea name="name" id="" value={offerSdpInput} onChange={changeOfferSdpInput}/>
                 </label>
                 <input type="submit" value={"offerSDP"}/>
             </form>
     
             <form onSubmit={submitAnswerSDP}>
                 <label>
-                    <textarea name="name" id="" value={answerSdpInput} onChange={changeAnswerSdpInput}></textarea>
+                    <textarea name="name" id="" value={answerSdpInput} onChange={changeAnswerSdpInput}/>
                 </label>
                 <input type="submit" value={"answerSDP"}/>
             </form>
             
             <button onClick={sendData}>send "can u see this?"</button>
     
-            <input type="file" onChange={onFileInputChange}/>
+            <form onSubmit={registerContent}>
+                <label >
+                    Content Id:
+                    <input type="number" onChange={onContentIdInputChange}/>
+                </label>
+                <input type="file" onChange={onFileInputChange}/>
+                <input type="submit" value="Submit"/>
+            </form>
     
             <button onClick={sendFile}>send file</button>
+            
+            <p> ハッシュ: {hash}</p>
+            
+            <button onClick={checkBufferedAmount}>checkBufferedAmount</button>
+            
+            <p>ロール: {role_render}</p>
         </div>
     )
 }

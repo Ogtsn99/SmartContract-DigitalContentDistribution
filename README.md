@@ -27,7 +27,17 @@ https://www.hiramine.com/programming/videochat_webrtc/index.html
 10/30 
   * frontend、手動でSDPを交換しWebRTC接続、dataChannelを
     使ってのファイルの転送まで
+    
 11/1
   * serverを立ててみる。socket.ioでfront側との接続まで確認。
     また、開発環境を整える。
   * deploy.tsの修正。
+
+11/8
+  * ノード側の登録の処理を作成
+  * スマートコントラクトとそのテストの作成
+
+11/15
+  * クライアントの登録、webRTCをつないでのファイル送信
+  * ファイル送信で今までは100MB~くらいのサイズだと
+ネットワークの状況によっては失敗していたのを改善
