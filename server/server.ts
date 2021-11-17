@@ -5,16 +5,16 @@ import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { ethers } from "ethers";
 import { SignatureLike } from "@ethersproject/bytes";
-import { sign } from "crypto";
+import { STATUS } from "./lib/Status";
 
 const env = process.env;
 
-let AccessRightNFTJson = require("../frontend/src/hardhat/deployments/"+ env.NETWORK_NAME +"/AccessRightNFT.json");
+let OwnershipNFTJson = require("../frontend/src/hardhat/deployments/"+ env.NETWORK_NAME +"/OwnershipNFT.json");
 let FileSharingContractJson = require("../frontend/src/hardhat/deployments/" + env.NETWORK_NAME + "/FileSharingContract.json");
 
 const provider = ethers.getDefaultProvider(env.NETWORK);
 const signer = new ethers.Wallet(env.PRIVATE_KEY, provider);
-const art = new ethers.Contract(AccessRightNFTJson.address, AccessRightNFTJson.abi, provider);
+const art = new ethers.Contract(OwnershipNFTJson.address, OwnershipNFTJson.abi, provider);
 const fsc = new ethers.Contract(FileSharingContractJson.address, FileSharingContractJson.abi, provider);
 
 const httpServer = createServer();
@@ -33,12 +33,6 @@ const addressToNodeMap = new Map<string, Node>();
 const socketIdToAddressMap = new Map<string, string>();
 const addressToClientMap = new Map<string, Client>();
 
-const STATUS = {
-	available: 'available',
-	unavailable: 'unavailable'
-} as const;
-type STATUS = typeof STATUS[keyof typeof STATUS];
-
 const ROLE = {
 	node: 'Node',
 	client: 'Client'
@@ -56,7 +50,7 @@ class Node {
 		this.socketId = socketId;
 		this.account = account;
 		// 最初はunavailable
-		this.status = STATUS.unavailable;
+		this.status = "available";
 	}
 
 	setOfferSDP(offerSDP: string) {
@@ -141,7 +135,7 @@ function clientSetting(socket: Socket, address: string) {
 		}
 		// TODO: 支払い確認、ノードの選択、ノードにこのアカウントでいいか聞く、ソケット経由でクライアントにofferSDPを知らせる。
 		// TODO: AnswerSDPをノードに知らせる
-		if(!art.isAccessible(address, data.contentId)) {
+		if(!art.hasOwnership(address, data.contentId)) {
 			io.to(socket.id).emit("error", {type: "NG",
 				message: "failed to request the content(id=" + data.contentId + ")",
 				error: "You don't have the access right of this content(id= "+ data.contentId + ")"});
@@ -185,7 +179,7 @@ function nodeSocketSetting(socket: Socket, address: string) {
 
 	socket.on("setContent", (data: {contentId: number})=> {
 		console.log("set content id =", data.contentId)
-		if(!art.isAccessible(address, data.contentId)) {
+		if(!art.hasOwnership(address, data.contentId)) {
 			io.to(socket.id).emit("error", {type: "NG",
 				message: "failed to set a content(id=" + data.contentId + ")",
 				error: "You don't have access right of this content(id= "+ data.contentId + ")"});
@@ -214,7 +208,7 @@ function nodeSocketSetting(socket: Socket, address: string) {
 
 	socket.on("setOfferSDP", (data: {offerSDP: string}) => {
 		node.setOfferSDP(data.offerSDP);
-		node.changeStatus(STATUS.available);
+		node.changeStatus('available');
 		console.log("set offer SDP", socket.id, data.offerSDP);
 		io.to(socket.id).emit("response", {type: "OK", message: "set offerSDP"});
 	});

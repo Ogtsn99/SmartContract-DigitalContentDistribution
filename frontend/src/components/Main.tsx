@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { AccessRightNFTContext, CurrentAddressContext, SignerContext } from "../hardhat/SymfoniContext";
-import { ethers } from "ethers";
+import { OwnershipNFTContext, CurrentAddressContext, SignerContext } from "../hardhat/SymfoniContext";
 import socketIOClient, { Socket } from "socket.io-client";
 import { sha256 } from 'js-sha256';
 let FileSaver = require('file-saver');
@@ -28,7 +27,7 @@ let buffer: ArrayBuffer;
 let role = "";
 
 export const Main: React.FC<Props> = () => {
-    const ART = useContext(AccessRightNFTContext);
+    const OWT = useContext(OwnershipNFTContext);
     const [offerSdpInput, setOfferSdpInput] = useState("");
     const [answerSdpInput, setAnswerSdpInput] = useState("");
     const [hash, setHash] = useState("");
@@ -408,7 +407,7 @@ export const Main: React.FC<Props> = () => {
             return ;
         }
         
-        let hasRight = await ART.instance?.isAccessible(currentAddress, contentId);
+        let hasRight = await OWT.instance?.hasOwnership(currentAddress, contentId);
         if(!hasRight) {
             alert("You don't own the content(id = "+ contentId + ")");
             return ;
@@ -416,7 +415,7 @@ export const Main: React.FC<Props> = () => {
        
         // TODO: コメントを外し、ハッシュチェックをするようにする
         /*
-        if(hash !== await ART.instance?.hashOf(contentId)) {
+        if(hash !== await OWT.instance?.hashOf(contentId)) {
             alert("the file hash is wrong");
             return ;
         }*/
