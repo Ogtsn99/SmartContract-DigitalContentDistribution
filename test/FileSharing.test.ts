@@ -35,12 +35,11 @@ describe("FileSharingContract", function () {
 		const FileSharingToken: ContractFactory = await ethers.getContractFactory("FileSharingToken", deployer);
 		fst = await FileSharingToken.deploy("FileSharingToken", "FST", "10000000000000000000000", true);
 		
-		const AccessRightNFT = await ethers.getContractFactory("AccessRightNFT", deployer);
-		art = await AccessRightNFT.deploy("AccessRightToken", "ART");
+		const Ownership = await ethers.getContractFactory("OwnershipNFT", deployer);
+		art = await Ownership.deploy("AccessRightToken", "OWT");
 		
 		const FileSharingContract = await ethers.getContractFactory("FileSharingContract", server);
-		fsc = await upgrades.deployProxy(FileSharingContract,
-			[art.address.toString(), fst.address.toString(), serverAddress, 10]);
+		fsc = await FileSharingContract.deploy(art.address.toString(), fst.address.toString(), serverAddress, 10);
 		
 		await fst.connect(deployer).transfer(clientAddress, 1000);
 		
@@ -60,7 +59,7 @@ describe("FileSharingContract", function () {
 		// it fails when client doesnt have NFT
 		await assertPromiseThrow(fsc.connect(client).payDownloadFee(0));
 		await art.connect(client).mint(0, clientAddress, {value: 500});
-		assert.isTrue(await art.isAccessible(clientAddress, 0));
+		assert.isTrue(await art.hasOwnership(clientAddress, 0));
 		await fsc.connect(author).setDownloadFee(0, 0);
 		// it fails when download fee is 0
 		await assertPromiseThrow(fsc.connect(client).payDownloadFee(0));

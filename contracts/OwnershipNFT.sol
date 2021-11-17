@@ -7,7 +7,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import './IERC2981Royalties.sol';
 import "hardhat/console.sol";
 
-contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
+contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
     using Strings for uint256;
 
     string private _baseURIextended;
@@ -29,9 +29,11 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     // mapping from content Id to royalty receiver
     mapping(uint256 => address) private _receivers;
     // mapping from tokenId to possessor
+    // possessor represents not the owner of the NFT,
+    // but the owner of the ownership of the content associated with the NFT
     mapping(uint256 => address) private _possessors;
-    // mapping from content Id to mapping from address to the number of content it holds.
-    mapping(uint256 => mapping(address => uint256)) private _contentNumber;
+    // mapping from content Id to mapping from address to the number of ownerships.
+    mapping(uint256 => mapping(address => uint256)) private ownerships;
 
     constructor(string memory name_, string memory symbol_)
     ERC721(name_, symbol_)
@@ -131,8 +133,8 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
     function lend(uint256 tokenId, address to) public {
         require(ownerOf(tokenId) == msg.sender, "you are not the owner");
         require(_possessors[tokenId] != to, "the account already possess the token");
-        _contentNumber[_contents[tokenId]][_possessors[tokenId]]--;
-        _contentNumber[_contents[tokenId]][to]++;
+        ownerships[_contents[tokenId]][_possessors[tokenId]]--;
+        ownerships[_contents[tokenId]][to]++;
         _possessors[tokenId] = to;
     }
 
@@ -147,9 +149,9 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
         _baseURIextended = baseURI_;
     }
 
-    function isAccessible(address account, uint256 contentId) public view returns(bool) {
+    function hasOwnership(address account, uint256 contentId) public view returns(bool) {
         require(contentId < _nextContentId, "content not existed");
-        return _contentNumber[contentId][account] != 0 || _authors[contentId] == account;
+        return ownerships[contentId][account] != 0 || _authors[contentId] == account;
     }
 
     function contentOf(uint256 tokenId) public view returns (uint256) {
@@ -193,11 +195,11 @@ contract AccessRightNFT is ERC721, IERC2981Royalties, Ownable {
         uint256 tokenId
     ) internal override {
         if(from != address(0)) {
-            _contentNumber[_contents[tokenId]][_possessors[tokenId]] -= 1;
+            ownerships[_contents[tokenId]][_possessors[tokenId]] -= 1;
         }
         if(to != address(0)) {
             _possessors[tokenId] = to;
-            _contentNumber[_contents[tokenId]][to] += 1;
+            ownerships[_contents[tokenId]][to] += 1;
         }
     }
 }

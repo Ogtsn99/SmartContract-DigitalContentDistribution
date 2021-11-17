@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "./AccessRightNFT.sol";
+import "./OwnershipNFT.sol";
 import "./FileSharingToken.sol";
 
 contract FileSharingContract {
@@ -17,11 +17,11 @@ contract FileSharingContract {
     address private _server;
     uint8 private _downloadLimit;
 
-    AccessRightNFT art;
+    OwnershipNFT owt;
     FileSharingToken fst;
 
-    constructor(address artAddress, address fstAddress, address server, uint8 downloadLimit) {
-        art = AccessRightNFT(artAddress);
+    constructor(address owtAddress, address fstAddress, address server, uint8 downloadLimit) {
+        owt = OwnershipNFT(owtAddress);
         fst = FileSharingToken(fstAddress);
         _server = server;
         _downloadLimit = downloadLimit;
@@ -36,15 +36,15 @@ contract FileSharingContract {
     event ApproveNode(address indexed clientAccount, uint256 indexed contentId, address indexed nodeAccount);
 
     function setDownloadFee(uint256 contentId, uint256 fee) public {
-        require(msg.sender == art.authorOf(contentId), "you are not the author");
+        require(msg.sender == owt.authorOf(contentId), "you are not the author");
         _downloadFees[contentId] = fee;
         emit SetDownloadFee(contentId, fee);
     }
 
     function setArrangedNode(address client, uint256 contentId, address node) external {
         require(msg.sender == _server);
-        require(art.isAccessible(client, contentId));
-        require(art.isAccessible(node, contentId));
+        require(owt.hasOwnership(client, contentId));
+        require(owt.hasOwnership(node, contentId));
         require(_count[client][contentId] >= 1, "you need to pay download Fee");
         _count[client][contentId] -= 1;
         _arrangedNode[client][contentId] = node;
@@ -52,7 +52,7 @@ contract FileSharingContract {
     }
 
     function payDownloadFee(uint256 contentId) external {
-        require(art.isAccessible(msg.sender, contentId), "you don't have the ownership");
+        require(owt.hasOwnership(msg.sender, contentId), "you don't have the ownership");
         require(_downloadFees[contentId] != 0, "download fee should not be zero");
         require(_count[msg.sender][contentId] == 0, "Your chances are remaining");
         uint256 feeIncludeCollateral = _downloadFees[contentId] * 5 / 2;

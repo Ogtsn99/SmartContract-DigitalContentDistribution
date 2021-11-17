@@ -26,7 +26,7 @@ describe("Market", function () {
 		, royaltyReceiver: Signer, other: Signer;
 	let authorAddress, sellerAddress, buyerAddress, buyer2Address, royaltyReceiverAddress, otherAddress;
 	//let authorBalance, sellerBalance, buyerBalance, buyer2Balance, royaltyReceiverBalance, otherBalance;
-	let art;
+	let owt;
 	let market;
 	
 	before(async function () {
@@ -45,29 +45,29 @@ describe("Market", function () {
 		royaltyReceiverBalance = await royaltyReceiver.getBalance();
 		otherBalance = await other.getBalance();*/
 		
-		const AccessRightNFT: ContractFactory = await ethers.getContractFactory("AccessRightNFT", deployer);
-		art = await AccessRightNFT.deploy("AccessRightToken", "ART");
+		const OwnershipNFT: ContractFactory = await ethers.getContractFactory("OwnershipNFT", deployer);
+		owt = await OwnershipNFT.deploy("OwnershipToken", "OWT");
 	
-		const AccessRightMarket = await ethers.getContractFactory("AccessRightMarket", deployer);
-		market = await upgrades.deployProxy(AccessRightMarket, [art.address.toString()]);
+		const OwnershipMarket = await ethers.getContractFactory("OwnershipMarket", deployer);
+		market = await upgrades.deployProxy(OwnershipMarket, [owt.address.toString()]);
 	});
 	
 	it("can set Price", async()=> {
 		// price: 500, royalty: 5%
-		await art.connect(author)['register(uint256,uint256)'](500, 500);
-		await art.connect(seller).mint(0, sellerAddress, {value: 500});
+		await owt.connect(author)['register(uint256,uint256)'](500, 500);
+		await owt.connect(seller).mint(0, sellerAddress, {value: 500});
 		
 		await market.connect(seller).setPrice(0, 1000);
 		assert.equal("1000", (await market.getPrice(0)).toString());
 	});
 	
 	it("non-owners fail to set price", async() => {
-		await assertPromiseThrow(art.connect(other).setPrice(0, 1200));
+		await assertPromiseThrow(owt.connect(other).setPrice(0, 1200));
 		assert.equal("1000", (await market.getPrice(0)).toString());
 	});
 	
 	it("buy NFT, royalty will be paid", async()=> {
-		await art.connect(seller).approve(market.address, 0);
+		await owt.connect(seller).approve(market.address, 0);
 		
 		let authorBalance: BigNumber = await author.getBalance();
 		let buyerBalance: BigNumber = await buyer.getBalance();
@@ -82,10 +82,10 @@ describe("Market", function () {
 		assertBN(authorBalance, await author.getBalance());
 		assertBN(sellerBalance, await seller.getBalance());
 		
-		assert.equal(buyerAddress, await art.ownerOf(0));
-		assert.isTrue(await art.isAccessible(buyerAddress, 0));
-		assert.isTrue(await art.isAccessible(authorAddress, 0));
-		assert.isFalse(await art.isAccessible(sellerAddress, 0));
+		assert.equal(buyerAddress, await owt.ownerOf(0));
+		assert.isTrue(await owt.hasOwnership(buyerAddress, 0));
+		assert.isTrue(await owt.hasOwnership(authorAddress, 0));
+		assert.isFalse(await owt.hasOwnership(sellerAddress, 0));
 	});
 	
 	it('change royalty rate and also receiver', async ()=> {
@@ -95,10 +95,10 @@ describe("Market", function () {
 		let receiverBalance: BigNumber = await royaltyReceiver.getBalance();
 		
 		await market.connect(buyer).setPrice(0, 1000);
-		await art.connect(buyer).approve(market.address, 0);
+		await owt.connect(buyer).approve(market.address, 0);
 		
 		// change royalty rate to 10% and also receiver
-		await art.connect(author).setRoyalty(0, 1000, royaltyReceiverAddress);
+		await owt.connect(author).setRoyalty(0, 1000, royaltyReceiverAddress);
 		await market.connect(buyer2).buyNFT(0, {value: 1000});
 		
 		buyerBalance = buyerBalance.add(900);
