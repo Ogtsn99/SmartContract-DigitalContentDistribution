@@ -204,7 +204,7 @@ export const Main: React.FC<Props> = () => {
                 if(role == "Node")
                     socket.emit("setOfferSDP", {offerSDP: pc.localDescription?.sdp});
                 else if(role == "Client") {
-                    socket.emit("answerSDP", {answerSDP: pc.localDescription?.sdp});
+                    socket.emit("setAnswerSDP", {answerSDP: pc.localDescription?.sdp});
                 } else {
                     alert("role: " + role);
                 }
