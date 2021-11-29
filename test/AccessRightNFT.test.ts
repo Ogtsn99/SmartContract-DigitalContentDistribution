@@ -136,5 +136,4 @@ describe("OWT", function () {
     assert.isFalse(await owt.hasOwnership(receiverAddress, contentId));
     assert.isTrue(await owt.hasOwnership(buyerAddress, contentId));
   })
-  
 });

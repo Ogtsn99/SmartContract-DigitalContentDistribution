@@ -13,12 +13,12 @@ const env = process.env;
 let OwnershipNFTJson = require("../frontend/src/hardhat/deployments/"+ env.NETWORK_NAME +"/OwnershipNFT.json");
 let FileSharingContractJson = require("../frontend/src/hardhat/deployments/" + env.NETWORK_NAME + "/FileSharingContract.json");
 
+const httpServer = createServer();
 const provider = ethers.getDefaultProvider(env.NETWORK);
 const signer = new ethers.Wallet(env.PRIVATE_KEY, provider);
+
 export const owt = (new ethers.Contract(OwnershipNFTJson.address, OwnershipNFTJson.abi, provider)).connect(signer);
 export const fsc = (new ethers.Contract(FileSharingContractJson.address, FileSharingContractJson.abi, provider)).connect(signer);
-
-const httpServer = createServer();
 
 export const io = new Server(httpServer, {
 	cors: {
@@ -27,9 +27,11 @@ export const io = new Server(httpServer, {
 	}
 });
 
+export const addressSet = new Set<string>();
+
 io.on("connection", (socket: Socket) => {
 
-	socket.on("register", (data: {signature: SignatureLike, role: ROLE}) => {
+	socket.on("register", (data: {signature: SignatureLike, role: ROLE}, ack) => {
 		let address;
 
 		try {
@@ -39,13 +41,26 @@ io.on("connection", (socket: Socket) => {
 				{message: "failed to recover address from the signature", error: e});
 			return ;
 		}
-
+		
+		if(addressSet.has(address)) {
+			console.log("address already exists. address =", address);
+			io.to(socket.id).emit("error",
+				{message: "failed to recover address from the signature",
+					error: "You are already registered."});
+			return ;
+		}
+		
+		addressSet.add(address);
+		
+		console.log("register as", data.role, "address =", address);
+		
 		if(data.role === "Node") {
 			nodeManager.createNode(socket, address);
-			io.to(socket.id).emit("response", {type: "OK", message: "new Node created and settings finished"});
+			ack("Node");
 		} else if(data.role === "Client") {
 			new Client(socket, address);
-			io.to(socket.id).emit("response", {type: "OK", message: "new Client created and settings finished"});
+			addressSet.add(address);
+			ack("Client");
 		}
 	})
 });

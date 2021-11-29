@@ -3,6 +3,7 @@ import { Socket } from "socket.io";
 import { Client } from "./Client";
 import { nodeManager } from "../NodeManager";
 import {
+	addressSet,
 	fsc,
 	io,
 	owt,
@@ -19,6 +20,7 @@ export class Node {
 	constructor(socket: Socket, account: string) {
 		this.socket = socket;
 		this.account = account;
+		this.client = null;
 		this.nodeSocketSetting(socket, account);
 	}
 	
@@ -44,9 +46,9 @@ export class Node {
 	}
 	
 	nodeSocketSetting(socket: Socket, address: string) {
-		socket.on("setContent", (data: {contentId: number})=> {
+		socket.on("setContent", async (data: {contentId: number}, ack)=> {
 			try {
-				if(!owt.hasOwnership(address, data.contentId)) {
+				if(!await owt.hasOwnership(address, data.contentId)) {
 					io.to(socket.id).emit("error", {type: "NG",
 						message: "failed to set a content(id=" + data.contentId + ")",
 						error: "You don't have access right of this content(id= "+ data.contentId + ")"})
@@ -61,13 +63,14 @@ export class Node {
 			nodeManager.addContent(this, data.contentId);
 			this.addContentId(data.contentId);
 			console.log("set content id =", data.contentId);
-			io.to(socket.id).emit("response", {type: "OK", message: "set a content(id=" + data.contentId + ")"});
+			ack("OK");
 		});
 		
-		socket.on("deleteContent", (data: {contentId: number})=> {
+		socket.on("deleteContent", (data: {contentId: number}, ack)=> {
 			this.deleteContentId(data.contentId);
 			nodeManager.deleteContent(this, data.contentId);
-			io.to(socket.id).emit("response", {type: "OK", message: "deleted a content(id=" + data.contentId + ")"});
+			console.log("delete content id =", data.contentId)
+			ack();
 		});
 		
 		socket.on("setOfferSDP", (data: {offerSDP: string}) => {
@@ -98,7 +101,7 @@ export class Node {
 				return ;
 			}
 			
-			io.to(socket.id).emit("request", {contentId:client.contentId ,answerSDP: client.answerSDP});
+			io.to(socket.id).emit("request", {contentId: client.contentId ,answerSDP: client.answerSDP});
 		});
 		
 		socket.on("reject", ()=> {
@@ -110,6 +113,7 @@ export class Node {
 		socket.on("disconnect", ()=> {
 			console.log("disconnect", this.socket.id);
 			nodeManager.deleteNode(this);
+			addressSet.delete(this.account);
 		})
 	}
 }

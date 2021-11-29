@@ -8,31 +8,45 @@ class NodeManager {
 	
 	createNode(socket: Socket, account: string) {
 		let node = new Node(socket, account);
-		this.addressToNodeMap[account] = node;
-		this.socketIdToAddressMap[account] = node;
+		this.addressToNodeMap.set(account, node);
+		this.socketIdToAddressMap.set(socket.id, account);
 	}
 	
 	deleteNode(node: Node) {
 		console.log("delete info", node.socket.id);
 		this.addressToNodeMap.delete(node.account);
-		node.contentIds.forEach((id)=>this.contentIdToNodeMap[id].delete(node))
+		node.contentIds.forEach((id)=>this.contentIdToNodeMap.get(id).delete(node))
 		this.socketIdToAddressMap.delete(node.socket.id);
 	}
 	
 	addContent(node: Node, contentId: number) {
-		if(this.contentIdToNodeMap[contentId] === undefined) {
-			this.contentIdToNodeMap[contentId] = new Set<Node>();
+		if(this.contentIdToNodeMap.get(contentId) === undefined) {
+			this.contentIdToNodeMap.set(contentId, (new Set<Node>()));
 		}
-		this.contentIdToNodeMap[contentId].add(node);
+		this.contentIdToNodeMap.get(contentId).add(node);
 	}
 	
 	deleteContent(node: Node, contentId: number) {
 		node.contentIds.delete(contentId);
-		this.contentIdToNodeMap[contentId].add(node);
+		this.contentIdToNodeMap.get(contentId).delete(node);
 	}
 	
-	selectNode(contentId: number) {
-		let array = Array.from(this.contentIdToNodeMap[contentId] as Set<Node>);
+	selectNode(contentId: number, nodesToExclude: Node[]) {
+		if(!this.contentIdToNodeMap.get(contentId) || this.contentIdToNodeMap.get(contentId).size === 0) {
+			return null;
+		}
+		
+		let array: Node[] = [];
+		
+		console.log("node登録数", this.contentIdToNodeMap.get(contentId).size)
+		
+		this.contentIdToNodeMap.get(contentId).forEach(node => {
+			if(!nodesToExclude.includes(node) && node.client === null) array.push(node);
+		})
+		
+		console.log("候補の数", array.length);
+		
+		if(array.length === 0) return null;
 		return array[Math.floor(Math.random() * array.length)];
 	}
 }

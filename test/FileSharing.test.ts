@@ -112,7 +112,7 @@ describe("FileSharingContract", function () {
 		console.log(contractBalance.toString());
 		console.log(nodeBalance.toString());
 		
-		await fsc.connect(client).approveNode(0);
+		await fsc.connect(client).approveNode(clientAddress, 0);
 		
 		console.log((await fst.balanceOf(clientAddress)).toString());
 		console.log((await fst.balanceOf(fsc.address)).toString());

@@ -65,20 +65,21 @@ contract FileSharingContract {
         }
     }
 
-    function approveNode(uint256 contentId) external {
-        require(_arrangedNode[msg.sender][contentId] != address(0), "node not arranged");
-        address node = _arrangedNode[msg.sender][contentId];
-        _arrangedNode[msg.sender][contentId] = address(0);
-        _payments[msg.sender][contentId] -= _payments[msg.sender][contentId] / 5;
-        uint256 payment = (_payments[msg.sender][contentId] + 1) / 2;
-        uint256 collateral = _payments[msg.sender][contentId] - payment;
+    function approveNode(address account, uint256 contentId) external {
+        require(msg.sender == account || msg.sender == _server, "You don't have permission.");
+        require(_arrangedNode[account][contentId] != address(0), "node not arranged");
+        address node = _arrangedNode[account][contentId];
+        _arrangedNode[account][contentId] = address(0);
+        _payments[account][contentId] -= _payments[account][contentId] / 5;
+        uint256 payment = (_payments[account][contentId] + 1) / 2;
+        uint256 collateral = _payments[account][contentId] - payment;
         fst.transfer(node, payment);
-        fst.transfer(msg.sender, collateral);
-        _payments[msg.sender][contentId] = 0;
-        if(_count[msg.sender][contentId] != 0) {
-            _count[msg.sender][contentId] = 0;
+        fst.transfer(account, collateral);
+        _payments[account][contentId] = 0;
+        if(_count[account][contentId] != 0) {
+            _count[account][contentId] = 0;
         }
-        emit ApproveNode(msg.sender, contentId, node);
+        emit ApproveNode(account, contentId, node);
     }
 
     function changeDownloadLimit(uint8 downloadLimit) public {

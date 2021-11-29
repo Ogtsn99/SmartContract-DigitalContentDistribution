@@ -47,7 +47,9 @@ module.exports = async ({
 	let fsc = await ethers.getContractAt("FileSharingContract", result.address);
 	
 	let author = (await ethers.getSigners())[0];
-	await owt.connect(author)['register(uint256,uint256,address,string)'](500, 500, await author.getAddress(), "e9e4cbda60f1d0b09487f87a89005c52a1133b642f4e43e2a211def82a88b88e");
+	
+	await owt.connect(author).setBaseURI("https://ipfs.io/ipfs/");
+	await owt.connect(author)['register(uint256,uint256,address,string,string)'](500, 500, author.address, "e9e4cbda60f1d0b09487f87a89005c52a1133b642f4e43e2a211def82a88b88e", "");
 	await owt.connect(author).mint(0, "0x56D46A22B46011e14Bdc4aA826060f7D0b9CfFe3");
 	await fsc.connect(author).setDownloadFee(0, 100);
 	await fst.connect(author).approve(fsc.address, 250);

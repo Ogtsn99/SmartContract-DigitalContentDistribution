@@ -1,7 +1,7 @@
 import { Node } from "./Node";
 import { Socket } from "socket.io";
 import { nodeManager } from "../NodeManager";
-import { io, owt } from "../server";
+import { addressSet, fsc, io, owt } from "../server";
 
 export class Client {
 	socket: Socket;
@@ -25,7 +25,7 @@ export class Client {
 	}
 	
 	private clientSetting(socket: Socket, address: string) {
-		socket.on("requestContent", (data: {contentId: number})=> {
+		socket.on("requestContent", async (data: {contentId: number})=> {
 			try {
 				if(!owt.hasOwnership(address, data.contentId)) {
 					io.to(socket.id).emit("error", {type: "NG",
@@ -40,12 +40,34 @@ export class Client {
 				return;
 			}
 			
-			let node = nodeManager.selectNode(data.contentId);
+			let chances = 0;
+			try {
+				chances = (await fsc.countOf(address, data.contentId)!);
+			} catch (e) {
+				chances = 0;
+			}
+			
+			if(chances == 0) {
+				io.to(socket.id).emit("error", {type: "NG",
+					message: "failed to request the content(id=" + data.contentId + ")",
+					error: "You have no chances to request nodes. you have to pay download fee."});
+				return;
+			}
+			
+			let exclude:Node[] = [this.node] || [];
+			
+			if(this.node)
+				this.node.client = null;
+			
+			let node = nodeManager.selectNode(data.contentId, exclude);
+			if(node)
+				console.log("選ばれしnode", node.account);
+			else console.log("選べるノードはありませんでした。");
 			
 			if(!node) {
 				io.to(socket.id).emit("error", {type: "NG",
 					message: "failed to request a content(id=" + data.contentId + ")",
-					error: "Maybe there's no node"});
+					error: "Sorry, There's no node to provide. Try again later."});
 				return;
 			}
 			
@@ -70,7 +92,10 @@ export class Client {
 		
 		socket.on("disconnect", ()=> {
 			console.log("disconnected address =", address);
-			this.node.deleteClient();
+			if(this.node) {
+				this.node.deleteClient();
+			}
+			addressSet.delete(this.account);
 		})
 	}
 }

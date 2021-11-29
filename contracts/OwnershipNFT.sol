@@ -10,18 +10,22 @@ import "hardhat/console.sol";
 contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
     using Strings for uint256;
 
-    string private _baseURIextended;
-    uint256 private _nextContentId;
-    uint256 private _nextTokenId;
+    string public baseURIextended;
+    uint256 public nextContentId;
+    uint256 public nextTokenId;
 
     // mapping from content Id to author address
     mapping(uint256 => address) private _authors;
-    // mapping from content Id to token Id
-    mapping(uint256 => uint256[]) private _tokens;
+    // mapping from content Id to token Id.
+    //mapping(uint256 => uint256[]) private _tokens;
     // mapping from token Id to content Id
     mapping(uint256 => uint256) private _contents;
     // mapping from contentId to content SHA256 hash
+    // どうしてハッシュをipfsに記録しないか -> ぶっちゃけIPFSに保存しても良い
+    // スピードの問題。ガス代はかかるが、ハッシュを取ってくるのに時間をあまりかけたくないと思ったため。
     mapping(uint256 => string) private _contentHashes;
+    // mapping from content id to ipfsPath
+    mapping(uint256 => string) private _ipfsPaths;
     // mapping from content Id to price you need to pay when minting
     mapping(uint256 => uint256) private _prices;
     // mapping from content Id to royalty
@@ -52,32 +56,38 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
     event SetPrice(uint256 indexed contentId, uint256 price);
     event SetRoyalty(uint256 indexed contentId, uint256 royalty, address receiver);
     event SetContentHash(uint256 indexed contentId, string hash);
+    event SetIpfsPath(uint256 indexed contentId, string path);
 
     function register(uint256 price, uint256 royalty) public {
-        register(price, royalty, msg.sender, "");
+        register(price, royalty, msg.sender, "", "");
     }
 
-    function register(uint256 price, uint256 royalty, address royaltyReceiver, string memory hash) public {
-        _authors[_nextContentId] = msg.sender;
-        emit Register(msg.sender, _nextContentId);
-        bytes memory hashBytes = bytes(hash);
-        if(hashBytes.length != 0) {
-            _contentHashes[_nextContentId] = hash;
-            emit SetContentHash(_nextContentId, hash);
-        }
+    function register(uint256 price, uint256 royalty, address royaltyReceiver, string memory hash, string memory path) public {
+        _authors[nextContentId] = msg.sender;
+        emit Register(msg.sender, nextContentId);
 
         if(price != 0) {
-            _prices[_nextContentId] = price;
-            emit SetPrice(_nextContentId, price);
+            _prices[nextContentId] = price;
+            emit SetPrice(nextContentId, price);
         }
 
         if(royalty != 0) {
-            _royalties[_nextContentId] = royalty;
-            _receivers[_nextContentId] = royaltyReceiver;
-            emit SetRoyalty(_nextContentId, royalty, royaltyReceiver);
+            _royalties[nextContentId] = royalty;
+            _receivers[nextContentId] = royaltyReceiver;
+            emit SetRoyalty(nextContentId, royalty, royaltyReceiver);
         }
 
-        _nextContentId += 1;
+        if(bytes(hash).length != 0) {
+            _contentHashes[nextContentId] = hash;
+            emit SetContentHash(nextContentId, hash);
+        }
+
+        if(bytes(path).length != 0) {
+            _ipfsPaths[nextContentId] = path;
+            emit SetIpfsPath(nextContentId, path);
+        }
+
+        nextContentId += 1;
     }
 
     function setPrice(uint256 contentId, uint256 price) public {
@@ -99,8 +109,14 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
 
     function setContentHash(uint256 contentId, string memory hash) public {
         require(msg.sender == _authors[contentId], "you are not the author");
-        _contentHashes[_nextContentId] = hash;
+        _contentHashes[nextContentId] = hash;
         emit SetContentHash(contentId, hash);
+    }
+
+    function setIpfsPath(uint256 contentId, string memory path) public {
+        require(msg.sender == _authors[contentId], "you are not the author");
+        _ipfsPaths[contentId] = path;
+        emit SetIpfsPath(contentId, path);
     }
 
     /// @notice Mint one token to `to`
@@ -110,7 +126,7 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
         uint256 contentId,
         address to
     ) payable external {
-        require(contentId < _nextContentId, "content not existed");
+        require(contentId < nextContentId, "content not existed");
 
         bool isAuthor = _authors[contentId] == msg.sender;
         require(_prices[contentId] == msg.value || isAuthor,
@@ -120,14 +136,14 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
             payable(_authors[contentId]).transfer(msg.value);
         }
 
-        uint256 tokenId = _nextTokenId;
+        uint256 tokenId = nextTokenId;
 
-        _tokens[contentId].push(_nextTokenId);
+        //_tokens[contentId].push(nextTokenId);
         _contents[tokenId] = contentId;
 
         _safeMint(to, tokenId, '');
 
-        _nextTokenId = tokenId + 1;
+        nextTokenId = tokenId + 1;
     }
 
     function lend(uint256 tokenId, address to) public {
@@ -146,32 +162,52 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
     }
 
     function setBaseURI(string memory baseURI_) public onlyOwner() {
-        _baseURIextended = baseURI_;
+        baseURIextended = baseURI_;
     }
 
     function hasOwnership(address account, uint256 contentId) public view returns(bool) {
-        require(contentId < _nextContentId, "content not existed");
+        require(contentId < nextContentId, "content not existed");
         return ownerships[contentId][account] != 0 || _authors[contentId] == account;
     }
 
     function contentOf(uint256 tokenId) public view returns (uint256) {
+        require(ownerOf(tokenId) != address(0), "token not existed");
         return _contents[tokenId];
     }
 
     function authorOf(uint256 contentId) public view returns (address) {
+        require(contentId < nextContentId, "content not existed");
         return _authors[contentId];
     }
 
-    function numberOfTokens() public view returns (uint256) {
-        return _nextTokenId;
+    function royaltyOf(uint256 contentId) public view returns (uint256) {
+        require(contentId < nextContentId, "content not existed");
+        return _royalties[contentId];
+    }
+
+    function royaltyReceiverOf(uint256 contentId) public view returns (address) {
+        require(contentId < nextContentId, "content not existed");
+        return _receivers[contentId];
     }
 
     function priceOf(uint256 contentId) public view returns (uint256) {
+        require(contentId < nextContentId, "content not existed");
         return _prices[contentId];
     }
 
     function hashOf(uint contentId) public view returns (string memory) {
+        require(contentId < nextContentId, "content not existed");
         return _contentHashes[contentId];
+    }
+
+    function ipfsPathOf(uint256 contentId) public view returns (string memory) {
+        return _ipfsPaths[contentId];
+    }
+
+    function contentURI(uint256 contentId) public view returns (string memory) {
+        require(contentId < nextContentId, "content not existed");
+        string memory baseURI = _baseURI();
+        return bytes(_ipfsPaths[contentId]).length > 0 ? string(abi.encodePacked(baseURI, _ipfsPaths[contentId])) : "";
     }
 
     /**
@@ -182,11 +218,11 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
 
         string memory baseURI = _baseURI();
 
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _contents[tokenId].toString())) : "";
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _ipfsPaths[_contents[tokenId]])) : "";
     }
 
     function _baseURI() internal view override returns (string memory) {
-        return _baseURIextended;
+        return baseURIextended;
     }
 
     function _beforeTokenTransfer(

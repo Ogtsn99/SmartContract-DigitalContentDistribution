@@ -7,8 +7,8 @@
       "hash": "0x93f7f7b274e35aa873317db636c17ec53f39097db955b61513698ab77a08dda7",
       "type": 0,
       "accessList": null,
-      "blockHash": "0xfcde50e623efd0d7c35796bd464c1e99276e1025c23fbd3c02e21db5c64e4cce",
-      "blockNumber": 54,
+      "blockHash": "0x68ea93e9fa39ff820bb4798eff89142b04960ac53005ccc3f73aa08fb6c41899",
+      "blockNumber": 55,
       "transactionIndex": 0,
       "confirmations": 1,
       "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
@@ -66,11 +66,6 @@
       "kind": "transparent"
     },
     {
-      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0x109c4229ac2af32b8f578b337f31a1b4dd605516b658d43309e33b223180236d",
-      "kind": "transparent"
-    },
-    {
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
       "txHash": "0x6d791463f1b0deb3208f596ee93a8c457b56147a30c21195ddb047f187a94f09",
       "kind": "transparent"
@@ -78,6 +73,11 @@
     {
       "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
       "txHash": "0x68a520f3e2bcb1d87a6109a8ce5fe26078169078ceb121e1dfd5d46353139553",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "txHash": "0xc8ee6e175e0c527acb5d2da864619b010a9ce0c5699ce26411901de1eaad9bdb",
       "kind": "transparent"
     },
     {
@@ -171,7 +171,7 @@
     },
     "6e47a22d759633371a6030a44c9bbbe5bb8c18ca1d7e64d757e2dba6a1a32bcc": {
       "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0x87af60471442f279837c93c733c70d87d476f2f13d6f5de648225cbaea5582be",
+      "txHash": "0x1c2d1e6e60508c08d4d0e94949a060b49958ffcd025a01659c49785692606a68",
       "layout": {
         "storage": [
           {
@@ -195,7 +195,7 @@
           {
             "contract": "OwnershipMarket",
             "label": "owt",
-            "type": "t_contract(OwnershipNFT)3886",
+            "type": "t_contract(OwnershipNFT)4052",
             "src": "contracts/OwnershipMarket.sol:13"
           }
         ],
@@ -206,7 +206,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(OwnershipNFT)3886": {
+          "t_contract(OwnershipNFT)4052": {
             "label": "contract OwnershipNFT"
           },
           "t_bool": {
