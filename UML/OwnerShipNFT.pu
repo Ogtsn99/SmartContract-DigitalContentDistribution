@@ -1,0 +1,8 @@
+@startuml OwnershipNFT
+
+participant author
+participant Contract 
+participant reader 
+
+author->Contract: register content
+reader->Contract: mint

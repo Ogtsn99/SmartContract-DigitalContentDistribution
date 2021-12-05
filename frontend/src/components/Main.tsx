@@ -8,13 +8,22 @@ import {
 import socketIOClient, { Socket } from "socket.io-client";
 import { sha256 } from 'js-sha256';
 import { ProgressBar, Table } from "react-bootstrap";
+import Peer from "skyway-js";
+const peer = new Peer({key: "4c89a12b-46ab-4c44-acd6-fd7ca9c7927f"});
+
+peer.on('open', ()=> {
+	console.log("Skyway peer Open event");
+	// @ts-ignore
+	rtcConfig = peer._pcConfig.iceServers;
+})
+
 
 let FileSaver = require('file-saver');
 
 interface Props {
 }
 
-const rtcConfig: RTCConfiguration = {"iceServers": []};
+let rtcConfig: RTCConfiguration = {};
 
 let pc: RTCPeerConnection;
 
@@ -98,6 +107,11 @@ export const Main: React.FC<Props> = () => {
 	}
 	
 	function initPeerConnection(role: string) {
+		if(rtcConfig == {}) {
+			console.log("skywayのopenイベントを待機しています。");
+			setTimeout(()=>initPeerConnection(role), 1000);
+			return ;
+		}
 		pc = new RTCPeerConnection(rtcConfig);
 		setupRTCPeerConnectionEventHandler(pc, role);
 		console.log("create datachannel!")
@@ -376,7 +390,7 @@ export const Main: React.FC<Props> = () => {
 			// TODO: 断るケースも作る
 			console.log("client Info きた!", data);
 			socket.emit("approve", {account: data.account});
-		})
+		});
 		
 		socket.on("request", async (data) => {
 			uploadSum = 0;

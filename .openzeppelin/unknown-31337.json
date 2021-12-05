@@ -7,7 +7,7 @@
       "hash": "0x93f7f7b274e35aa873317db636c17ec53f39097db955b61513698ab77a08dda7",
       "type": 0,
       "accessList": null,
-      "blockHash": "0x68ea93e9fa39ff820bb4798eff89142b04960ac53005ccc3f73aa08fb6c41899",
+      "blockHash": "0xa7107b20ee3fafa057cb2bb10f473239b0345f023eb4391788a9811553e9413c",
       "blockNumber": 55,
       "transactionIndex": 0,
       "confirmations": 1,
@@ -195,7 +195,7 @@
           {
             "contract": "OwnershipMarket",
             "label": "owt",
-            "type": "t_contract(OwnershipNFT)4052",
+            "type": "t_contract(OwnershipNFT)4060",
             "src": "contracts/OwnershipMarket.sol:13"
           }
         ],
@@ -206,7 +206,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(OwnershipNFT)4052": {
+          "t_contract(OwnershipNFT)4060": {
             "label": "contract OwnershipNFT"
           },
           "t_bool": {

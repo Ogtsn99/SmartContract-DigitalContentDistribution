@@ -57,17 +57,17 @@ describe("FileSharingContract", function () {
 	
 	it("can pay download fee", async() => {
 		// it fails when client doesnt have NFT
-		await assertPromiseThrow(fsc.connect(client).payDownloadFee(0));
+		await assertPromiseThrow(fsc.connect(client)["payDownloadFee(uint256)"](0));
 		await art.connect(client).mint(0, clientAddress, {value: 500});
 		assert.isTrue(await art.hasOwnership(clientAddress, 0));
 		await fsc.connect(author).setDownloadFee(0, 0);
 		// it fails when download fee is 0
-		await assertPromiseThrow(fsc.connect(client).payDownloadFee(0));
+		await assertPromiseThrow(fsc.connect(client)["payDownloadFee(uint256)"](0));
 		assert.equal(await fsc.paymentOf(clientAddress, 0), 0);
 		
 		await fsc.connect(author).setDownloadFee(0, 100);
 		await fst.connect(client).approve(fsc.address, 250);
-		await fsc.connect(client).payDownloadFee(0);
+		await fsc.connect(client)["payDownloadFee(uint256)"](0);
 		assert.equal(await fsc.paymentOf(clientAddress, 0), 250);
 		assert.equal(await fsc.countOf(clientAddress, 0), 10);
 	})
@@ -88,7 +88,7 @@ describe("FileSharingContract", function () {
 		}
 		assert.equal(await fsc.countOf(clientAddress, 0), 0);
 		await fst.connect(client).approve(fsc.address, 250);
-		await fsc.connect(client).payDownloadFee(0);
+		await fsc.connect(client)["payDownloadFee(uint256)"](0);
 		assert.equal(await fsc.arrangedNodeOf(clientAddress, 0), "0x0000000000000000000000000000000000000000");
 		assert.equal(await fsc.paymentOf(clientAddress, 0), 250);
 		assert.equal(await fsc.countOf(clientAddress, 0), 10);

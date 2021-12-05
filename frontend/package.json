@@ -23,6 +23,7 @@
     "react-router-dom": "^6.0.2",
     "react-scripts": "3.4.3",
     "sha256": "^0.2.0",
+    "skyway-js": "^4.4.3",
     "socket.io-client": "^4.3.2",
     "typescript": "^3.9.7",
     "web3modal": "^1.9.1",

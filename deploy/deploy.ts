@@ -53,12 +53,12 @@ module.exports = async ({
 	await owt.connect(author).mint(0, "0x56D46A22B46011e14Bdc4aA826060f7D0b9CfFe3");
 	await fsc.connect(author).setDownloadFee(0, 100);
 	await fst.connect(author).approve(fsc.address, 250);
-	await fsc.connect(author).payDownloadFee(0);
+	await fsc.connect(author)["payDownloadFee(uint256)"](0);
 	let user2 = (await ethers.getSigners())[1];
 	fst.connect(author).transfer("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", 10000);
 	await owt.connect(author).mint(0, "0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
 	await fst.connect(user2).approve(fsc.address, 250);
-	await fsc.connect(user2).payDownloadFee(0);
+	await fsc.connect(user2)["payDownloadFee(uint256)"](0);
 	console.log(author.address);
 	console.log("server address ..." , (await ethers.getSigners())[1].address);
 	

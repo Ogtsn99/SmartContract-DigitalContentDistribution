@@ -1,0 +1,42 @@
+@startuml P2PFileSharing_with_SmartContract
+
+participant Client
+participant Server
+participant Node
+participant FileSharingContract
+
+activate Server
+activate Client
+activate Node
+Node<->Server: start socket connecion
+Node->Server: Signature(socketID), ROLE(=NODE)
+Server->Server: inspect Signature, create Node instance
+Server->Node: OK
+Node->Server: contentID
+Server->Server: check Ownership
+Server->Server: node.addContentId()
+Node->Server: Offer SDP
+Server->Server: set OfferSDP
+Client->FileSharingContract: payDownloadFee
+Client<->Server: start socket connection
+Client->Server: Signature(socketId), ROLE=(CLIENT)
+Server->Server: inspect Signature, NFT
+Server->Client: OK
+Client->Server: request Download
+Server->Server: check Ownership
+Server->FileSharingContract: check payment
+Server->Server: select node
+Server->Node: Client Info
+Node->Server: approve
+Server->FileSharingContract: set arranged node
+Server->Client: Offer SDP, node's EOA
+Client->Server: Answer SDP
+Server->Node: Answer SDP
+Client<->Node: start WebRTC connection
+Node->Client: Send Content Data
+Client->Client: check Data
+Client->FileSharingContract: ApproveNode
+FileSharingContract->Node: Download Fee
+FileSharingContract->Server: Compound Fee
+FileSharingContract->Client: Collateral
+@enduml

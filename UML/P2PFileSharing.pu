@@ -1,4 +1,4 @@
-@startuml sample
+@startuml P2PFileSharing
 
 participant Client
 participant Server

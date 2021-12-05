@@ -102,7 +102,7 @@ export const ContentAndTokenInterface = () => {
 		let json = JSON.stringify(metadata);
 		console.log(json);
 		let result = await ipfs.add(json);
-		console.log(result.path);
+		console.log(result);
 		await OWT.instance?.["register(uint256,uint256,address,string,string)"](price, royalty, royaltyReceiver, fileHash, result.path);
 	}
 	
@@ -174,7 +174,7 @@ export const ContentAndTokenInterface = () => {
 								<th>{e.price.toString()}</th>
 								<th>{e.royalty / 100}%</th>
 								<th>{e.royaltyReceiver}</th>
-								<th>{"ipfs:"+e.uri}</th>
+								<th>{"https://ipfs.io/ipfs/"+e.uri}</th>
 							</tr>
 						);
 					}

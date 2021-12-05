@@ -51,35 +51,39 @@ contract FileSharingContract {
         emit SetArrangedNode(client, contentId, node);
     }
 
-    function payDownloadFee(uint256 contentId) external {
-        require(owt.hasOwnership(msg.sender, contentId), "you don't have the ownership");
+    function payDownloadFee(uint256 contentId) public {
+        payDownloadFee(msg.sender, contentId);
+    }
+
+    function payDownloadFee(address client, uint256 contentId) public {
+        require(owt.hasOwnership(client, contentId), "you don't have the ownership");
         require(_downloadFees[contentId] != 0, "download fee should not be zero");
-        require(_count[msg.sender][contentId] == 0, "Your chances are remaining");
+        require(_count[client][contentId] == 0, "still have chances");
         uint256 feeIncludeCollateral = _downloadFees[contentId] * 5 / 2;
         fst.transferFrom(msg.sender, address(this), feeIncludeCollateral);
-        _payments[msg.sender][contentId] = feeIncludeCollateral;
+        _payments[client][contentId] = feeIncludeCollateral;
         emit PayDownloadFee(msg.sender, contentId, feeIncludeCollateral);
-        _count[msg.sender][contentId] = _downloadLimit;
-        if(_arrangedNode[msg.sender][contentId] != address(0)) {
-            _arrangedNode[msg.sender][contentId] = address(0);
+        _count[client][contentId] = _downloadLimit;
+        if(_arrangedNode[client][contentId] != address(0)) {
+            _arrangedNode[client][contentId] = address(0);
         }
     }
 
-    function approveNode(address account, uint256 contentId) external {
-        require(msg.sender == account || msg.sender == _server, "You don't have permission.");
-        require(_arrangedNode[account][contentId] != address(0), "node not arranged");
-        address node = _arrangedNode[account][contentId];
-        _arrangedNode[account][contentId] = address(0);
-        _payments[account][contentId] -= _payments[account][contentId] / 5;
-        uint256 payment = (_payments[account][contentId] + 1) / 2;
-        uint256 collateral = _payments[account][contentId] - payment;
+    function approveNode(address client, uint256 contentId) external {
+        require(msg.sender == client || msg.sender == _server, "You don't have permission.");
+        require(_arrangedNode[client][contentId] != address(0), "node not arranged");
+        address node = _arrangedNode[client][contentId];
+        _arrangedNode[client][contentId] = address(0);
+        _payments[client][contentId] -= _payments[client][contentId] / 5;
+        uint256 payment = (_payments[client][contentId] + 1) / 2;
+        uint256 collateral = _payments[client][contentId] - payment;
         fst.transfer(node, payment);
-        fst.transfer(account, collateral);
-        _payments[account][contentId] = 0;
-        if(_count[account][contentId] != 0) {
-            _count[account][contentId] = 0;
+        fst.transfer(client, collateral);
+        _payments[client][contentId] = 0;
+        if(_count[client][contentId] != 0) {
+            _count[client][contentId] = 0;
         }
-        emit ApproveNode(account, contentId, node);
+        emit ApproveNode(client, contentId, node);
     }
 
     function changeDownloadLimit(uint8 downloadLimit) public {
@@ -94,19 +98,19 @@ contract FileSharingContract {
         fst.transfer(msg.sender, fst.balanceOf(address(this)));
     }
 
-    function countOf(address account, uint256 contentId) public view returns(uint8) {
-        return _count[account][contentId];
+    function countOf(address client, uint256 contentId) public view returns(uint8) {
+        return _count[client][contentId];
     }
 
-    function arrangedNodeOf(address account, uint256 contentId) public view returns(address) {
-        return _arrangedNode[account][contentId];
+    function arrangedNodeOf(address client, uint256 contentId) public view returns(address) {
+        return _arrangedNode[client][contentId];
     }
 
     function downloadFeeOf(uint256 contentId) public view returns(uint256) {
         return _downloadFees[contentId];
     }
 
-    function paymentOf(address account, uint256 contentId) public view returns(uint256) {
-        return _payments[account][contentId];
+    function paymentOf(address client, uint256 contentId) public view returns(uint256) {
+        return _payments[client][contentId];
     }
 }
