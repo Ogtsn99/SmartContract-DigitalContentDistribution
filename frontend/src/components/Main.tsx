@@ -40,6 +40,7 @@ let byteCount: number;
 
 let socket: Socket;
 socket = socketIOClient("https://signaling-server-fileshare.herokuapp.com", {
+  transports: ['websocket', 'polling', 'flashsocket'],
 	withCredentials: true,
 });
 

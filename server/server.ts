@@ -7,6 +7,7 @@ import { ROLE } from "./modules/Role";
 import { Node } from "./modules/Node";
 import { Client } from "./modules/Client";
 import { nodeManager } from "./NodeManager";
+const PORT = process.env.PORT || 3000;
 
 const env = process.env;
 console.log(env);
@@ -71,6 +72,6 @@ io.on("connection", (socket: Socket) => {
 	})
 });
 
-httpServer.listen(5000);
+httpServer.listen(PORT);
 
 console.log("http server established");
