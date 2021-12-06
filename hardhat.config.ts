@@ -6,6 +6,8 @@ import "hardhat-deploy";
 import "@symfoni/hardhat-react";
 import "hardhat-typechain";
 import "@typechain/ethers-v5";
+require('dotenv').config();
+const env = process.env;
 
 require('@openzeppelin/hardhat-upgrades');
 
@@ -38,6 +40,11 @@ const config: HardhatUserConfig = {
       initialBaseFeePerGas: 0,
       gasPrice: 0,
     },
+    mumbai: {
+      chainId: 80001,
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY_MUMBAI}`,
+      accounts: [`0x${env.MUMBAI_PRIVATE_KEY}`]
+    }
     // hardhat: {
     //   accounts: [
     //     {

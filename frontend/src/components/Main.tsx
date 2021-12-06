@@ -467,8 +467,6 @@ export const Main: React.FC<Props> = () => {
 			return ;
 		}
 		
-		// TODO: コメントを外し、ハッシュチェックをするようにする
-		
 		if(hash !== await OWT.instance?.hashOf(contentId)) {
 				alert("the file hash is wrong");
 				return ;

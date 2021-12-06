@@ -22,7 +22,7 @@ export const fsc = (new ethers.Contract(FileSharingContractJson.address, FileSha
 
 export const io = new Server(httpServer, {
 	cors: {
-		origin: "http://localhost:3000",
+		origin: env.FRONT_URL,
 		methods: ["GET", "POST"],
 	}
 });

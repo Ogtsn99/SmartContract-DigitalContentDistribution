@@ -13,6 +13,8 @@ module.exports = async ({
 	const { deploy } = deployments;
 	const { deployer } = await getNamedAccounts();
 	
+	let chainId = await getChainId();
+	
 	let result = await deploy("OwnershipNFT", {
 			from: deployer,
 		args: ["OwnershipToken", "OWT"]
@@ -35,31 +37,19 @@ module.exports = async ({
 		args: ["FileSharingToken", "FST", "10000000000000000000000", true]
 	});
 	
-	let fstAddress = result.address;
-	let fst = await ethers.getContractAt("FileSharingToken", fstAddress);
+	console.log("FileSharingToken deployed. address =", result.address);
 	
+	let fstAddress = result.address;
 	
 	result = await deploy("FileSharingContract", {
 		from: deployer,
-		args: [owtAddress, fstAddress, (await ethers.getSigners())[1].address, 10],
+		args: [owtAddress, fstAddress, deployer, 10],
 	});
 	
-	let fsc = await ethers.getContractAt("FileSharingContract", result.address);
+	console.log("FileSharingContract deployed. address =", result.address);
 	
-	let author = (await ethers.getSigners())[0];
+	let signer = (await ethers.getSigners())[0];
+	await owt.connect(signer).setBaseURI("https://ipfs.io/ipfs/");
 	
-	await owt.connect(author).setBaseURI("https://ipfs.io/ipfs/");
-	await owt.connect(author)['register(uint256,uint256,address,string,string)'](500, 500, author.address, "e9e4cbda60f1d0b09487f87a89005c52a1133b642f4e43e2a211def82a88b88e", "");
-	await owt.connect(author).mint(0, "0x56D46A22B46011e14Bdc4aA826060f7D0b9CfFe3");
-	await fsc.connect(author).setDownloadFee(0, 100);
-	await fst.connect(author).approve(fsc.address, 250);
-	await fsc.connect(author)["payDownloadFee(uint256)"](0);
-	let user2 = (await ethers.getSigners())[1];
-	fst.connect(author).transfer("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", 10000);
-	await owt.connect(author).mint(0, "0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
-	await fst.connect(user2).approve(fsc.address, 250);
-	await fsc.connect(user2)["payDownloadFee(uint256)"](0);
-	console.log(author.address);
-	console.log("server address ..." , (await ethers.getSigners())[1].address);
-	
+	// TODO: ここでサンプルデータの登録をする
 };
