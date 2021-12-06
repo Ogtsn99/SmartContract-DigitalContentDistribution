@@ -15,12 +15,14 @@ export class Node {
 	status: STATUS; // enumかunionに変える?
 	client: Client | null;
 	contentIds: Set<number> = new Set<number>(); // number -> BigNumber??
-	offerSDP: string;
+	offerSDP: string | null;
 	
 	constructor(socket: Socket, account: string) {
 		this.socket = socket;
 		this.account = account;
 		this.client = null;
+		this.status = "available";
+		this.offerSDP = null;
 		this.nodeSocketSetting(socket, account);
 	}
 	
@@ -105,9 +107,13 @@ export class Node {
 		});
 		
 		socket.on("reject", ()=> {
-			this.client.setNode(null);
-			io.to(this.client.socket.id).emit("requestRejected");
-			this.client = null;
+			if(this.client) {
+				this.client!.setNode(null);
+				io.to(this.client!.socket.id).emit("requestRejected");
+				this.client = null;
+			} else {
+				io.to(this.socket.id).emit("error", {message: "client is null"});
+			}
 		})
 		
 		socket.on("disconnect", ()=> {

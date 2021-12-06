@@ -15,10 +15,11 @@ let FileSharingContractJson = require("../frontend/src/hardhat/deployments/" + e
 
 const httpServer = createServer();
 const provider = ethers.getDefaultProvider(env.NETWORK);
-const signer = new ethers.Wallet(env.PRIVATE_KEY, provider);
+const signer = new ethers.Wallet(env.PRIVATE_KEY!, provider);
 
 export const owt = (new ethers.Contract(OwnershipNFTJson.address, OwnershipNFTJson.abi, provider)).connect(signer);
 export const fsc = (new ethers.Contract(FileSharingContractJson.address, FileSharingContractJson.abi, provider)).connect(signer);
+
 
 export const io = new Server(httpServer, {
 	cors: {
@@ -26,6 +27,7 @@ export const io = new Server(httpServer, {
 		methods: ["GET", "POST"],
 	}
 });
+
 
 export const addressSet = new Set<string>();
 
@@ -66,3 +68,5 @@ io.on("connection", (socket: Socket) => {
 });
 
 httpServer.listen(5000);
+
+console.log("http server established");

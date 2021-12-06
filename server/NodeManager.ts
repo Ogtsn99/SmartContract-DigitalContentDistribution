@@ -15,32 +15,36 @@ class NodeManager {
 	deleteNode(node: Node) {
 		console.log("delete info", node.socket.id);
 		this.addressToNodeMap.delete(node.account);
-		node.contentIds.forEach((id)=>this.contentIdToNodeMap.get(id).delete(node))
+		node.contentIds.forEach((id)=>{
+			if(this.contentIdToNodeMap.has(id))
+				this.contentIdToNodeMap.get(id)!.delete(node)
+		})
 		this.socketIdToAddressMap.delete(node.socket.id);
 	}
 	
 	addContent(node: Node, contentId: number) {
-		if(this.contentIdToNodeMap.get(contentId) === undefined) {
+		if(this.contentIdToNodeMap.has(contentId)) {
 			this.contentIdToNodeMap.set(contentId, (new Set<Node>()));
 		}
-		this.contentIdToNodeMap.get(contentId).add(node);
+		this.contentIdToNodeMap.get(contentId)!.add(node);
 	}
 	
 	deleteContent(node: Node, contentId: number) {
 		node.contentIds.delete(contentId);
-		this.contentIdToNodeMap.get(contentId).delete(node);
+		if(this.contentIdToNodeMap.has(contentId))
+			this.contentIdToNodeMap.get(contentId)!.delete(node);
 	}
 	
 	selectNode(contentId: number, nodesToExclude: Node[]) {
-		if(!this.contentIdToNodeMap.get(contentId) || this.contentIdToNodeMap.get(contentId).size === 0) {
+		if(!this.contentIdToNodeMap.get(contentId) || this.contentIdToNodeMap.get(contentId)!.size === 0) {
 			return null;
 		}
 		
 		let array: Node[] = [];
 		
-		console.log("node登録数", this.contentIdToNodeMap.get(contentId).size)
+		console.log("node登録数", this.contentIdToNodeMap.get(contentId)!.size)
 		
-		this.contentIdToNodeMap.get(contentId).forEach(node => {
+		this.contentIdToNodeMap.get(contentId)!.forEach(node => {
 			if(!nodesToExclude.includes(node) && node.client === null) array.push(node);
 		})
 		

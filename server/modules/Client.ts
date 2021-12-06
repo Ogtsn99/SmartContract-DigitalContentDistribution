@@ -6,17 +6,20 @@ import { addressSet, fsc, io, owt } from "../server";
 export class Client {
 	socket: Socket;
 	account: string;
-	contentId: number;
-	answerSDP: string;
-	node: Node;
+	contentId: number|null;
+	answerSDP: string|null;
+	node: Node|null;
 	
 	constructor(socket: Socket, account: string) {
 		this.socket = socket;
 		this.account = account;
+		this.node = null;
+		this.contentId = null;
+		this.answerSDP = null;
 		this.clientSetting(socket, account);
 	}
 	
-	setNode(node: Node) {
+	setNode(node: Node|null) {
 		this.node = node;
 	}
 	
@@ -54,7 +57,10 @@ export class Client {
 				return;
 			}
 			
-			let exclude:Node[] = [this.node] || [];
+			let exclude:Node[] = [];
+			if(this.node) {
+				exclude.push(this.node);
+			}
 			
 			if(this.node)
 				this.node.client = null;
@@ -80,7 +86,7 @@ export class Client {
 		
 		socket.on("setAnswerSDP", (data: {answerSDP: string}) => {
 			if(!this.node) {
-				io.to(this.node.socket.id).emit("error", {message: "failed to set answerSDP",
+				io.to(this.node!.socket.id).emit("error", {message: "failed to set answerSDP",
 				error: "Node is not selected."});
 				return ;
 			}
