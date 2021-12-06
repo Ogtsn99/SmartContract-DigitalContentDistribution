@@ -29,6 +29,7 @@ export const io = new Server(httpServer, {
 	cors: {
 		origin: env.FRONT_URL,
 		methods: ["GET", "POST"],
+		credentials: true,
 	}
 });
 

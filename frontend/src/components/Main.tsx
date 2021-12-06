@@ -39,7 +39,9 @@ let byteSize: number;
 let byteCount: number;
 
 let socket: Socket;
-socket = socketIOClient("http://localhost:5000");
+socket = socketIOClient("https://signaling-server-fileshare.herokuapp.com", {
+	withCredentials: true,
+});
 
 socket.on("error", (data) => {
 	console.log("error");
