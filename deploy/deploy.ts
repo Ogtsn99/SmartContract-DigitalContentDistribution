@@ -15,6 +15,9 @@ module.exports = async ({
 	
 	let chainId = await getChainId();
 	
+	console.log("chainId =", chainId);
+	console.log("deployer =", deployer);
+	
 	let result = await deploy("OwnershipNFT", {
 			from: deployer,
 		args: ["OwnershipToken", "OWT"]

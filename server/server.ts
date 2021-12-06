@@ -9,6 +9,7 @@ import { Client } from "./modules/Client";
 import { nodeManager } from "./NodeManager";
 
 const env = process.env;
+console.log(env);
 
 let OwnershipNFTJson = require("../frontend/src/hardhat/deployments/"+ env.NETWORK_NAME +"/OwnershipNFT.json");
 let FileSharingContractJson = require("../frontend/src/hardhat/deployments/" + env.NETWORK_NAME + "/FileSharingContract.json");
@@ -17,9 +18,12 @@ const httpServer = createServer();
 const provider = ethers.getDefaultProvider(env.NETWORK);
 const signer = new ethers.Wallet(env.PRIVATE_KEY!, provider);
 
+console.log("address =", signer.address);
+
 export const owt = (new ethers.Contract(OwnershipNFTJson.address, OwnershipNFTJson.abi, provider)).connect(signer);
 export const fsc = (new ethers.Contract(FileSharingContractJson.address, FileSharingContractJson.abi, provider)).connect(signer);
 
+console.log("front url =", env.FRONT_URL)
 
 export const io = new Server(httpServer, {
 	cors: {
@@ -27,7 +31,6 @@ export const io = new Server(httpServer, {
 		methods: ["GET", "POST"],
 	}
 });
-
 
 export const addressSet = new Set<string>();
 

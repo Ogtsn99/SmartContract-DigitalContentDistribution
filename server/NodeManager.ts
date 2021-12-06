@@ -23,7 +23,7 @@ class NodeManager {
 	}
 	
 	addContent(node: Node, contentId: number) {
-		if(this.contentIdToNodeMap.has(contentId)) {
+		if(!this.contentIdToNodeMap.has(contentId)) {
 			this.contentIdToNodeMap.set(contentId, (new Set<Node>()));
 		}
 		this.contentIdToNodeMap.get(contentId)!.add(node);
