@@ -77,6 +77,7 @@ let blob: Blob;
 let chancesToExchangeNode_ = 0;
 let nodeAccount_ = "";
 
+// TODO: リファクタリング
 export const Main: React.FC<Props> = () => {
 	const OWT = useContext(OwnershipNFTContext);
 	const FSC = useContext(FileSharingContractContext);
