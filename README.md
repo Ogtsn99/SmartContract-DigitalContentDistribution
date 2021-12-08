@@ -1,4 +1,5 @@
 #READ ME
+
 Dapp
 https://content-delivery-front.herokuapp.com/
 
@@ -43,6 +44,7 @@ https://www.hiramine.com/programming/videochat_webrtc/index.html
   * クライアントの登録、webRTCをつないでのファイル送信
   * ファイル送信で今までは100MB~くらいのサイズだと
 ネットワークの状況によっては失敗していたのを改善
+    
 12/8
   * Mumbaiテストネットにデプロイ
   * herokuにサーバ、フロントエンドをデプロイ
