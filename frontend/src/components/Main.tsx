@@ -9,6 +9,7 @@ import socketIOClient, { Socket } from "socket.io-client";
 import { sha256 } from 'js-sha256';
 import { ProgressBar, Table } from "react-bootstrap";
 import Peer from "skyway-js";
+import date from 'date-and-time';
 const peer = new Peer({key: "4c89a12b-46ab-4c44-acd6-fd7ca9c7927f"});
 
 peer.on('open', ()=> {
@@ -39,7 +40,12 @@ let byteSize: number;
 let byteCount: number;
 
 let socket: Socket;
-socket = socketIOClient("https://signaling-server-fileshare.herokuapp.com", {
+
+let serverURL = "https://signaling-server-fileshare.herokuapp.com";
+// TODO: コメントアウトする↓
+//serverURL = "http://localhost:5000";
+
+socket = socketIOClient(serverURL, {
   transports: ['websocket', 'polling', 'flashsocket'],
 	withCredentials: true,
 });
@@ -76,6 +82,12 @@ let blob: Blob;
 
 let chancesToExchangeNode_ = 0;
 let nodeAccount_ = "";
+
+function logTime() {
+	let now = new Date();
+	console.log(date.format(now, 'YYYY/MM/DD HH:mm:ss'));
+	console.log("time =", now.getTime());
+}
 
 // TODO: リファクタリング
 export const Main: React.FC<Props> = () => {
@@ -133,7 +145,7 @@ export const Main: React.FC<Props> = () => {
 		};
 		
 		dataChannel.onmessage = async function (event) {
-			console.log("message received", event.data);
+			//console.log("message received", event.data);
 			if (typeof event.data == "string") {
 				let message: string = event.data;
 				let m = message.split('-');
@@ -142,16 +154,18 @@ export const Main: React.FC<Props> = () => {
 					pc.close();
 					dataChannel.close();
 					initPeerConnection("Node");
-				} else
-				if (m[0] === "byteLength") {
+				} else if (m[0] === "byteLength") {
 					byteSize = parseInt(m[1]);
 					byteCount = 0;
 					bufferList = [];
 					console.log("byteSize", byteSize);
+					let now = new Date();
+					console.log(date.format(now, 'YYYY/MM/DD HH:mm:ss'));
+					console.log("time =", now.getTime());
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				} else if (m[0] == "require") {
 					let start = parseInt(m[1]), end = Math.min(buffer.byteLength, parseInt(m[2]));
-					console.log("start=", start, "end=", end);
+					//console.log("start=", start, "end=", end);
 					uploadSum += end - start;
 					for (const e of contents_) {
 						if(e.contentId === requestedContentId) {
@@ -167,27 +181,31 @@ export const Main: React.FC<Props> = () => {
 					}
 				}
 			} else { // データが送られてきた時の処理
-				console.log("byteSize=", byteSize);
+				// console.log("byteSize=", byteSize);
 				bufferList.push(event.data);
 				byteCount += event.data.byteLength;
 				setProgress(byteCount / byteSize * 100);
-				console.log("byteCount=", byteCount, "byteSize=", byteSize);
+				// console.log("byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
 					blob = new Blob(bufferList, {type: "octet/stream"});
 					let buffer = await blob.arrayBuffer();
 					// TODO: ハッシュ値を確認したらノードをapproveする
-					console.log("もらったファイルのハッシュ=", sha256(buffer));
-					console.log("欲しかったファイルのハッシュ=", await OWT.instance?.hashOf(contentIdToRequest));
+					// console.log("もらったファイルのハッシュ=", sha256(buffer));
+					// console.log("欲しかったファイルのハッシュ=", await OWT.instance?.hashOf(contentIdToRequest));
 					if(sha256(buffer) !== await OWT.instance?.hashOf(contentIdToRequest)) {
-						alert("received wrong file... Request other node.")
+						alert("received wrong file... Request other node.");
+						return ;
 					}
+					
+					console.log("data received");
+					logTime();
 					
 					dataChannel.send("finish");
 					FileSaver.saveAs(blob, "downloadedFile");
 					setSavable(true);
 				} else {
-					console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+					// console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				}
 			}
@@ -203,62 +221,34 @@ export const Main: React.FC<Props> = () => {
 	}
 	
 	function setupRTCPeerConnectionEventHandler(pc: RTCPeerConnection, role: string) {
-		// TODO: ここでイベントハンドラを定義する
 		
-		// Negotiation needed イベントが発生したときのイベントハンドラ
-		// - このイベントは、セッションネゴシエーションを必要とする変更が発生したときに発生する。
-		//   一部のセッション変更はアンサーとしてネゴシエートできないため、このネゴシエーションはオファー側として実行されなければならない。
-		//   最も一般的には、negotiationneededイベントは、RTCPeerConnectionに送信トラックが追加された後に発生する。
-		//   ネゴシエーションがすでに進行しているときに、ネゴシエーションを必要とする方法でセッションが変更された場合、
-		//   ネゴシエーションが完了するまで、negotiationneededイベントは発生せず、ネゴシエーションがまだ必要な場合にのみ発生する。
-		//   see : https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onnegotiationneeded
 		pc.onnegotiationneeded = async () => {
-			console.log("Event : Negotiation needed");
 			await pc.setLocalDescription(await pc.createOffer());
 		};
 		
-		// ICE candidate イベントが発生したときのイベントハンドラ
-		// - これは、ローカルのICEエージェントがシグナリング・サーバを介して
-		//   他のピアにメッセージを配信する必要があるときはいつでも発生する。
-		//   これにより、ブラウザ自身がシグナリングに使用されている技術についての詳細を知る必要がなく、
-		//   ICE エージェントがリモートピアとのネゴシエーションを実行できるようになる。
-		//   see : https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onicecandidate
 		pc.onicecandidate = (event) => {
 			console.log("Event : ICE candidate");
 			if (event.candidate) {   // ICE candidateがある
 				console.log("- ICE candidate : ", event.candidate);
 				
-				// Vanilla ICEの場合は、何もしない
-				// Trickle ICEの場合は、ICE candidateを相手に送る
-			} else {   // ICE candiateがない = ICE candidate の収集終了。
+			} else {
 				console.log("- ICE candidate : empty");
 			}
 		};
-		
-		// ICE candidate error イベントが発生したときのイベントハンドラ
-		// - このイベントは、ICE候補の収集処理中にエラーが発生した場合に発生する。
-		//   see : https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onicecandidateerror
+
 		pc.onicecandidateerror = (event) => {
 			console.error("Event : ICE candidate error. ", event);
 		};
 		
-		// ICE gathering state change イベントが発生したときのイベントハンドラ
-		// - このイベントは、ICE gathering stateが変化したときに発生する。
-		//   言い換えれば、ICEエージェントがアクティブに候補者を収集しているかどうかが変化したときに発生する。
-		//   see : https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onicegatheringstatechange
 		pc.onicegatheringstatechange = () => {
-			console.log("Event : ICE gathering state change");
-			console.log("- ICE gathering state : ", pc.iceGatheringState);
+			// console.log("Event : ICE gathering state change");
+			// console.log("- ICE gathering state : ", pc.iceGatheringState);
 			
 			if ("complete" === pc.iceGatheringState) {
-				// TODO: 同じノードを2回連続で接続するここは変わらない？チェックが必要
-				// Vanilla ICEの場合は、ICE candidateを含んだOfferSDP/AnswerSDPを相手に送る
-				// Trickle ICEの場合は、何もしない
 				
-				// Offer側のOfferSDP用のテキストエリアに貼付
-				console.log(role);
-				console.log("- Set OfferSDP in textarea");
-				console.log(pc.localDescription?.sdp);
+				// console.log(role);
+				// console.log("- Set OfferSDP in textarea");
+				// console.log(pc.localDescription?.sdp);
 				if (role == "Node") {
 					socket.emit("setOfferSDP", {offerSDP: pc.localDescription?.sdp});
 				} else if (role == "Client") {
@@ -365,9 +355,7 @@ export const Main: React.FC<Props> = () => {
 	
 	function onContentIdInputChange(e: React.ChangeEvent<HTMLInputElement>) {
 		e.preventDefault();
-		console.log("change!", parseInt(e.target.value));
 		contentId = parseInt(e.target.value);
-		console.log(contentId);
 	}
 	
 	async function onContentIdToRequestInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -392,15 +380,15 @@ export const Main: React.FC<Props> = () => {
 		
 		socket.on("clientInfo", async (data) => {
 			// TODO: 断るケースも作る
-			console.log("client Info きた!", data);
+			// console.log("client Info received", data);
 			socket.emit("approve", {account: data.account});
 		});
 		
 		socket.on("request", async (data) => {
 			uploadSum = 0;
 			requestedContentId = data.contentId;
-			console.log(data);
-			console.log("content id =", data.contentId);
+			// console.log(data);
+			// console.log("content id =", data.contentId);
 			
 			let remoteDescription: RTCSessionDescriptionInit =
 				{
@@ -409,7 +397,7 @@ export const Main: React.FC<Props> = () => {
 				}
 			await pc.setRemoteDescription(remoteDescription);
 			
-			console.log(data.answerSDP);
+			// console.log(data.answerSDP);
 			// dataChannel.ondatachannelでコンテンツの長さを伝える
 		});
 		
@@ -426,13 +414,14 @@ export const Main: React.FC<Props> = () => {
 	async function registerAsClient() {
 		let signature = await signer?.signMessage(socket.id);
 		socket.on("nodeInfo", async (data) => {
-			console.log("node Info", data);
+			console.log("node info received")
+			// console.log("node Info", data);
 			chancesToExchangeNode_ -= 1;
 			setChancesToExchangeNode(chancesToExchangeNode_);
 			setNodeAccount(data.account);
 			nodeAccount_ = data.account;
 			
-			console.log(data.offerSDP);
+			// console.log(data.offerSDP);
 			let remoteDescription: RTCSessionDescriptionInit =
 				{
 					sdp: data.offerSDP,
@@ -452,13 +441,10 @@ export const Main: React.FC<Props> = () => {
 	
 	async function registerContent(e: any) {
 		e.preventDefault();
-		console.log(role)
 		if (role != "Node") {
 			alert("You are not a Node");
 			return;
 		}
-		
-		console.log(currentAddress, contentId);
 		
 		try {
 			let isOwn = await OWT.instance?.hasOwnership(currentAddress, contentId);
@@ -488,6 +474,10 @@ export const Main: React.FC<Props> = () => {
 	
 	function requestContent(e: any) {
 		e.preventDefault();
+		console.log("Request content, id=", contentIdToRequest);
+		
+		logTime();
+		
 		socket.emit("requestContent", {contentId: contentIdToRequest});
 	}
 	
@@ -542,7 +532,6 @@ export const Main: React.FC<Props> = () => {
 				<button onClick={saveFile} disabled={!savable}>保存</button>
 				<button onClick={transferAgain}>transfer again</button>
 				<button onClick={requestOtherNode}>request other node</button>
-				<button disabled={true}>approve node</button>
 			</div>
 			
 			<div hidden={role !== "Node"} className="mt-5">
@@ -555,7 +544,7 @@ export const Main: React.FC<Props> = () => {
 					<input type="submit" value="Submit"/>
 				</form>
 				
-				<button onClick={sendFile}>send file</button>
+				{/*<button onClick={sendFile}>send file</button>*/}
 				
 				<p> ハッシュ: {hash}</p>
 				
