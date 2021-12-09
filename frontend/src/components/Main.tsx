@@ -31,7 +31,7 @@ let pc: RTCPeerConnection;
 let dataChannel: RTCDataChannel;
 
 let dataChannelOption: RTCDataChannelInit = {
-	maxPacketLifeTime: 1000
+	ordered: true,
 }
 
 let requestedContentId: number;
@@ -173,6 +173,7 @@ export const Main: React.FC<Props> = () => {
 								pc.close();
 								return ;
 							}
+							console.log("send data", start, "to", end);
 							dataChannel.send(e.buffer.slice(start, end));
 							return ;
 						}
