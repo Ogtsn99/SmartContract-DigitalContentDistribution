@@ -145,7 +145,7 @@ export const Main: React.FC<Props> = () => {
 		};
 		
 		dataChannel.onmessage = async function (event) {
-			//console.log("message received", event.data);
+			console.log("message received", event.data);
 			if (typeof event.data == "string") {
 				let message: string = event.data;
 				let m = message.split('-');
@@ -159,13 +159,11 @@ export const Main: React.FC<Props> = () => {
 					byteCount = 0;
 					bufferList = [];
 					console.log("byteSize", byteSize);
-					let now = new Date();
-					console.log(date.format(now, 'YYYY/MM/DD HH:mm:ss'));
-					console.log("time =", now.getTime());
+					logTime();
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				} else if (m[0] == "require") {
 					let start = parseInt(m[1]), end = Math.min(buffer.byteLength, parseInt(m[2]));
-					//console.log("start=", start, "end=", end);
+					console.log("start=", start, "end=", end);
 					uploadSum += end - start;
 					for (const e of contents_) {
 						if(e.contentId === requestedContentId) {
@@ -181,18 +179,17 @@ export const Main: React.FC<Props> = () => {
 					}
 				}
 			} else { // データが送られてきた時の処理
-				// console.log("byteSize=", byteSize);
 				bufferList.push(event.data);
 				byteCount += event.data.byteLength;
 				setProgress(byteCount / byteSize * 100);
-				// console.log("byteCount=", byteCount, "byteSize=", byteSize);
+				console.log("byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
 					blob = new Blob(bufferList, {type: "octet/stream"});
 					let buffer = await blob.arrayBuffer();
 					// TODO: ハッシュ値を確認したらノードをapproveする
-					// console.log("もらったファイルのハッシュ=", sha256(buffer));
-					// console.log("欲しかったファイルのハッシュ=", await OWT.instance?.hashOf(contentIdToRequest));
+					console.log("もらったファイルのハッシュ=", sha256(buffer));
+					console.log("欲しかったファイルのハッシュ=", await OWT.instance?.hashOf(contentIdToRequest));
 					if(sha256(buffer) !== await OWT.instance?.hashOf(contentIdToRequest)) {
 						alert("received wrong file... Request other node.");
 						return ;
@@ -205,7 +202,7 @@ export const Main: React.FC<Props> = () => {
 					FileSaver.saveAs(blob, "downloadedFile");
 					setSavable(true);
 				} else {
-					// console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+					console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				}
 			}

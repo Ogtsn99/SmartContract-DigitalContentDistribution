@@ -12,12 +12,12 @@ import { FileSharingContract__factory } from "./typechain/factories/FileSharingC
 import FileSharingTokenDeployment from "./deployments/mumbai/FileSharingToken.json";
 import { FileSharingToken } from "./typechain/FileSharingToken";
 import { FileSharingToken__factory } from "./typechain/factories/FileSharingToken__factory";
-import OwnershipMarketDeployment from "./deployments/mumbai/OwnershipMarket.json";
-import { OwnershipMarket } from "./typechain/OwnershipMarket";
-import { OwnershipMarket__factory } from "./typechain/factories/OwnershipMarket__factory";
 import OwnershipNFTDeployment from "./deployments/mumbai/OwnershipNFT.json";
 import { OwnershipNFT } from "./typechain/OwnershipNFT";
 import { OwnershipNFT__factory } from "./typechain/factories/OwnershipNFT__factory";
+import OwnershipMarketDeployment from "./deployments/mumbai/OwnershipMarket.json";
+import { OwnershipMarket } from "./typechain/OwnershipMarket";
+import { OwnershipMarket__factory } from "./typechain/factories/OwnershipMarket__factory";
 import { ERC20 } from "./typechain/ERC20";
 import { ERC20__factory } from "./typechain/factories/ERC20__factory";
 import { ERC721 } from "./typechain/ERC721";
@@ -45,8 +45,8 @@ export const OwnershipMarket_ImplementationContext = React.createContext<Symfoni
 export const OwnershipMarket_ProxyContext = React.createContext<SymfoniOwnershipMarket>(emptyContract);
 export const FileSharingContractContext = React.createContext<SymfoniFileSharingContract>(emptyContract);
 export const FileSharingTokenContext = React.createContext<SymfoniFileSharingToken>(emptyContract);
-export const OwnershipMarketContext = React.createContext<SymfoniOwnershipMarket>(emptyContract);
 export const OwnershipNFTContext = React.createContext<SymfoniOwnershipNFT>(emptyContract);
+export const OwnershipMarketContext = React.createContext<SymfoniOwnershipMarket>(emptyContract);
 export const ERC20Context = React.createContext<SymfoniERC20>(emptyContract);
 export const ERC721Context = React.createContext<SymfoniERC721>(emptyContract);
 
@@ -84,14 +84,14 @@ export interface SymfoniFileSharingToken {
     factory?: FileSharingToken__factory;
 }
 
-export interface SymfoniOwnershipMarket {
-    instance?: OwnershipMarket;
-    factory?: OwnershipMarket__factory;
-}
-
 export interface SymfoniOwnershipNFT {
     instance?: OwnershipNFT;
     factory?: OwnershipNFT__factory;
+}
+
+export interface SymfoniOwnershipMarket {
+    instance?: OwnershipMarket;
+    factory?: OwnershipMarket__factory;
 }
 
 export interface SymfoniERC20 {
@@ -122,8 +122,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
     const [OwnershipMarket_Proxy, setOwnershipMarket_Proxy] = useState<SymfoniOwnershipMarket>(emptyContract);
     const [FileSharingContract, setFileSharingContract] = useState<SymfoniFileSharingContract>(emptyContract);
     const [FileSharingToken, setFileSharingToken] = useState<SymfoniFileSharingToken>(emptyContract);
-    const [OwnershipMarket, setOwnershipMarket] = useState<SymfoniOwnershipMarket>(emptyContract);
     const [OwnershipNFT, setOwnershipNFT] = useState<SymfoniOwnershipNFT>(emptyContract);
+    const [OwnershipMarket, setOwnershipMarket] = useState<SymfoniOwnershipMarket>(emptyContract);
     const [ERC20, setERC20] = useState<SymfoniERC20>(emptyContract);
     const [ERC721, setERC721] = useState<SymfoniERC721>(emptyContract);
     useEffect(() => {
@@ -209,8 +209,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
                 setOwnershipMarket_Proxy(getOwnershipMarket_Proxy(_provider, _signer))
                 setFileSharingContract(getFileSharingContract(_provider, _signer))
                 setFileSharingToken(getFileSharingToken(_provider, _signer))
-                setOwnershipMarket(getOwnershipMarket(_provider, _signer))
                 setOwnershipNFT(getOwnershipNFT(_provider, _signer))
+                setOwnershipMarket(getOwnershipMarket(_provider, _signer))
                 setERC20(getERC20(_provider, _signer))
                 setERC721(getERC721(_provider, _signer))
                 finish(text)
@@ -285,17 +285,6 @@ export const Symfoni: React.FC<SymfoniProps> = ({
         return contract
     }
         ;
-    const getOwnershipMarket = (_provider: providers.Provider, _signer?: Signer) => {
-
-        const contractAddress = OwnershipMarketDeployment.receipt.contractAddress
-        const instance = _signer ? OwnershipMarket__factory.connect(contractAddress, _signer) : OwnershipMarket__factory.connect(contractAddress, _provider)
-        const contract: SymfoniOwnershipMarket = {
-            instance: instance,
-            factory: _signer ? new OwnershipMarket__factory(_signer) : undefined,
-        }
-        return contract
-    }
-        ;
     const getOwnershipNFT = (_provider: providers.Provider, _signer?: Signer) => {
 
         const contractAddress = OwnershipNFTDeployment.receipt.contractAddress
@@ -303,6 +292,17 @@ export const Symfoni: React.FC<SymfoniProps> = ({
         const contract: SymfoniOwnershipNFT = {
             instance: instance,
             factory: _signer ? new OwnershipNFT__factory(_signer) : undefined,
+        }
+        return contract
+    }
+        ;
+    const getOwnershipMarket = (_provider: providers.Provider, _signer?: Signer) => {
+
+        const contractAddress = OwnershipMarketDeployment.receipt.contractAddress
+        const instance = _signer ? OwnershipMarket__factory.connect(contractAddress, _signer) : OwnershipMarket__factory.connect(contractAddress, _provider)
+        const contract: SymfoniOwnershipMarket = {
+            instance: instance,
+            factory: _signer ? new OwnershipMarket__factory(_signer) : undefined,
         }
         return contract
     }
@@ -343,8 +343,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
                             <OwnershipMarket_ProxyContext.Provider value={OwnershipMarket_Proxy}>
                                 <FileSharingContractContext.Provider value={FileSharingContract}>
                                     <FileSharingTokenContext.Provider value={FileSharingToken}>
-                                        <OwnershipMarketContext.Provider value={OwnershipMarket}>
-                                            <OwnershipNFTContext.Provider value={OwnershipNFT}>
+                                        <OwnershipNFTContext.Provider value={OwnershipNFT}>
+                                            <OwnershipMarketContext.Provider value={OwnershipMarket}>
                                                 <ERC20Context.Provider value={ERC20}>
                                                     <ERC721Context.Provider value={ERC721}>
                                                         {showLoading && loading ?
@@ -359,8 +359,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
                                                         }
                                                     </ERC721Context.Provider >
                                                 </ERC20Context.Provider >
-                                            </OwnershipNFTContext.Provider >
-                                        </OwnershipMarketContext.Provider >
+                                            </OwnershipMarketContext.Provider >
+                                        </OwnershipNFTContext.Provider >
                                     </FileSharingTokenContext.Provider >
                                 </FileSharingContractContext.Provider >
                             </OwnershipMarket_ProxyContext.Provider >

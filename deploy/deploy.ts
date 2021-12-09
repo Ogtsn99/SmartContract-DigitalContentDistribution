@@ -63,8 +63,10 @@ module.exports = async ({
 	let buyer = (await ethers.getSigners())[1];
 	await fst.connect(buyer).faucet();
 	const register = async (fileHash:string, path:string) => {
+		console.log("register content");
+		console.log("we have now", (await owt.nextContentId()).toNumber());
+		let contentId = (await owt.nextContentId()).toNumber();
 		await owt.connect(author)["register(uint256,uint256,address,string,string)"](100000, 0, await author.getAddress(), fileHash, path);
-		let contentId = (await owt.nextContentId()).toNumber() -1;
 		await owt.connect(buyer).mint(contentId, await buyer.getAddress(), {value: 100000});
 		await fsc.connect(author).setDownloadFee(contentId , 100);
 		await fst.connect(buyer).approve(fscAddress, 250);
