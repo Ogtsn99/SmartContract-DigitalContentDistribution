@@ -18,7 +18,6 @@ peer.on('open', ()=> {
 	rtcConfig = peer._pcConfig.iceServers;
 })
 
-
 let FileSaver = require('file-saver');
 
 interface Props {
@@ -60,7 +59,6 @@ socket.on("error", (data) => {
 
 let buffer: ArrayBuffer;
 
-// TODO: ノードのファイルを複数登録できるようにしたので動作確認。
 class Content {
 	contentId: number;
 	contentHash: string;
@@ -145,7 +143,7 @@ export const Main: React.FC<Props> = () => {
 		};
 		
 		dataChannel.onmessage = async function (event) {
-			console.log("message received", event.data);
+			//console.log("message received", event.data);
 			if (typeof event.data == "string") {
 				let message: string = event.data;
 				let m = message.split('-');
@@ -158,12 +156,12 @@ export const Main: React.FC<Props> = () => {
 					byteSize = parseInt(m[1]);
 					byteCount = 0;
 					bufferList = [];
-					console.log("byteSize", byteSize);
+					console.log("get byteSize", byteSize);
 					logTime();
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				} else if (m[0] == "require") {
 					let start = parseInt(m[1]), end = Math.min(buffer.byteLength, parseInt(m[2]));
-					console.log("start=", start, "end=", end);
+					//console.log("start=", start, "end=", end);
 					uploadSum += end - start;
 					for (const e of contents_) {
 						if(e.contentId === requestedContentId) {
@@ -183,7 +181,7 @@ export const Main: React.FC<Props> = () => {
 				bufferList.push(event.data);
 				byteCount += event.data.byteLength;
 				setProgress(byteCount / byteSize * 100);
-				console.log("byteCount=", byteCount, "byteSize=", byteSize);
+				//console.log("byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
 					blob = new Blob(bufferList, {type: "octet/stream"});
@@ -203,7 +201,7 @@ export const Main: React.FC<Props> = () => {
 					FileSaver.saveAs(blob, "downloadedFile");
 					setSavable(true);
 				} else {
-					console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+					//console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				}
 			}
