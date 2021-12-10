@@ -82,10 +82,16 @@ let blob: Blob;
 let chancesToExchangeNode_ = 0;
 let nodeAccount_ = "";
 
-function logTime() {
+let timeRecorder: any = [];
+
+function logTime(message: string) {
 	let now = new Date();
-	console.log(date.format(now, 'YYYY/MM/DD HH:mm:ss'));
-	console.log("time =", now.getTime());
+	let time:any = {
+		message: message,
+		time: date.format(now, 'YYYY/MM/DD HH:mm:ss'),
+		numTime: now.getTime()
+	}
+	timeRecorder.push(time);
 }
 
 // TODO: リファクタリング
@@ -157,8 +163,7 @@ export const Main: React.FC<Props> = () => {
 					byteSize = parseInt(m[1]);
 					byteCount = 0;
 					bufferList = [];
-					console.log("get byteSize", byteSize);
-					logTime();
+					logTime("get byteSize");
 					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				} else if (m[0] == "require") {
 					let start = parseInt(m[1]), end = Math.min(buffer.byteLength, parseInt(m[2]));
@@ -185,18 +190,14 @@ export const Main: React.FC<Props> = () => {
 				//console.log("byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
-					console.log("data received");
-					logTime();
+					logTime("data received");
 					blob = new Blob(bufferList, {type: "octet/stream"});
-					console.log("bufferList to blob");
-					logTime();
+					logTime("bufferList to blob");
 					let buffer = await blob.arrayBuffer();
-					console.log("blob.arrayBuffer finished");
-					logTime();
+					logTime("blob.arrayBuffer finished");
 					
 					let hash = sha256(buffer);
-					console.log("calc hash");
-					logTime();
+					logTime("calc hash");
 					
 					console.log("もらったファイルのハッシュ=", hash);
 					
@@ -207,8 +208,8 @@ export const Main: React.FC<Props> = () => {
 						return ;
 					}
 					
-					console.log("hash Check finished!");
-					logTime();
+					logTime("hash Check finished!");
+					console.log(timeRecorder);
 					
 					dataChannel.send("finish");
 					FileSaver.saveAs(blob, "downloadedFile");
@@ -486,7 +487,7 @@ export const Main: React.FC<Props> = () => {
 		e.preventDefault();
 		console.log("Request content, id=", contentIdToRequest);
 		
-		logTime();
+		logTime("request content");
 		
 		socket.emit("requestContent", {contentId: contentIdToRequest});
 	}
