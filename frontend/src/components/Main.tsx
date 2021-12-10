@@ -285,6 +285,8 @@ export const Main: React.FC<Props> = () => {
 				pc.close();
 				dataChannel.close();
 				initPeerConnection("Node");
+			} else if(pc.iceConnectionState == "connected") {
+				logTime("WebRTC conenction established");
 			}
 			// "disconnected" : コンポーネントがまだ接続されていることを確認するために、RTCPeerConnectionオブジェクトの少なくとも
 			//                  1つのコンポーネントに対して失敗したことを確認します。これは、"failed "よりも厳しいテストではなく、
@@ -413,6 +415,7 @@ export const Main: React.FC<Props> = () => {
 			// dataChannel.ondatachannelでコンテンツの長さを伝える
 		});
 		
+		// TODO: register as nodeの時間を計測
 		socket.emit("register", {signature: signature, role: "Node"}, (data: string) => {
 			if (data === "Node") {
 				console.log("Successfully registered as Node");
@@ -426,7 +429,7 @@ export const Main: React.FC<Props> = () => {
 	async function registerAsClient() {
 		let signature = await signer?.signMessage(socket.id);
 		socket.on("nodeInfo", async (data) => {
-			console.log("node info received")
+			logTime("node info received");
 			// console.log("node Info", data);
 			chancesToExchangeNode_ -= 1;
 			setChancesToExchangeNode(chancesToExchangeNode_);
@@ -520,7 +523,6 @@ export const Main: React.FC<Props> = () => {
 		pc.close();
 		dataChannel.close();
 		initPeerConnection("Client");
-		
 		socket.emit("requestContent", {contentId: contentIdToRequest});
 	}
 	
