@@ -177,7 +177,7 @@ export const Main: React.FC<Props> = () => {
 								pc.close();
 								return ;
 							}
-							console.log("send data", start, "to", end);
+							//console.log("send data", start, "to", end);
 							dataChannel.send(e.buffer.slice(start, end));
 							return ;
 						}
@@ -373,6 +373,7 @@ export const Main: React.FC<Props> = () => {
 		contentIdToRequest = parseInt(e.target.value);
 		contentHashToRequest = await OWT.instance?.hashOf(contentIdToRequest)!;
 		let chances = 0;
+		// TODO: ノード交換可能回数が更新されない問題を直す
 		if(e.target.value === "") chances = 0;
 		else {
 			try {
@@ -391,7 +392,7 @@ export const Main: React.FC<Props> = () => {
 		
 		socket.on("clientInfo", async (data) => {
 			// TODO: 断るケースも作る
-			// console.log("client Info received", data);
+			console.log("client Info received", data);
 			socket.emit("approve", {account: data.account});
 		});
 		
