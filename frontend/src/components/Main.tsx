@@ -73,6 +73,7 @@ class Content {
 
 let contentId = 0;
 let contentIdToRequest = 0;
+let contentHashToRequest:string = "";
 let uploadSum = 0;
 
 let contents_:Content[] = [];
@@ -184,17 +185,29 @@ export const Main: React.FC<Props> = () => {
 				//console.log("byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
+					console.log("data received");
+					logTime();
 					blob = new Blob(bufferList, {type: "octet/stream"});
+					console.log("bufferList to blob");
+					logTime();
 					let buffer = await blob.arrayBuffer();
-					// TODO: ハッシュ値を確認したらノードをapproveする
-					console.log("もらったファイルのハッシュ=", sha256(buffer));
-					console.log("欲しかったファイルのハッシュ=", await OWT.instance?.hashOf(contentIdToRequest));
-					if(sha256(buffer) !== await OWT.instance?.hashOf(contentIdToRequest)) {
+					console.log("blob.arrayBuffer finished");
+					logTime();
+					
+					let hash = sha256(buffer);
+					console.log("calc hash");
+					logTime();
+					
+					console.log("もらったファイルのハッシュ=", hash);
+					
+					console.log("欲しかったファイルのハッシュ=", contentHashToRequest);
+					
+					if(hash !== contentHashToRequest) {
 						alert("received wrong file... Request other node.");
 						return ;
 					}
 					
-					console.log("data received");
+					console.log("hash Check finished!");
 					logTime();
 					
 					dataChannel.send("finish");
@@ -357,6 +370,7 @@ export const Main: React.FC<Props> = () => {
 	async function onContentIdToRequestInputChange(e: React.ChangeEvent<HTMLInputElement>) {
 		e.preventDefault();
 		contentIdToRequest = parseInt(e.target.value);
+		contentHashToRequest = await OWT.instance?.hashOf(contentIdToRequest)!;
 		let chances = 0;
 		if(e.target.value === "") chances = 0;
 		else {
