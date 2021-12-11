@@ -42,7 +42,7 @@ let socket: Socket;
 
 let serverURL = "https://signaling-server-fileshare.herokuapp.com";
 // TODO: コメントアウトする↓
-//serverURL = "http://localhost:5000";
+serverURL = "http://localhost:5000";
 
 socket = socketIOClient(serverURL, {
   transports: ['websocket', 'polling', 'flashsocket'],
@@ -83,6 +83,15 @@ let chancesToExchangeNode_ = 0;
 let nodeAccount_ = "";
 
 let timeRecorder: any = [];
+function showTimeRecord() {
+	console.log(timeRecorder);
+	console.log("全体:", timeRecorder[10].numTime - timeRecorder[0].numTime);
+	console.log("ノード情報を受け取るまで:", timeRecorder[1].numTime - timeRecorder[0].numTime);
+	console.log("WebRTC接続まで:", timeRecorder[2].numTime - timeRecorder[1].numTime);
+	console.log("データチャンネルオープンまで:", timeRecorder[4].numTime - timeRecorder[2].numTime)
+	console.log("データ受信まで:", timeRecorder[6].numTime - timeRecorder[4].numTime);
+	console.log("ハッシュ化:", timeRecorder[10].numTime - timeRecorder[6].numTime)
+}
 
 function logTime(message: string) {
 	let now = new Date();
@@ -209,7 +218,7 @@ export const Main: React.FC<Props> = () => {
 					}
 					
 					logTime("hash Check finished!");
-					console.log(timeRecorder);
+					showTimeRecord();
 					
 					dataChannel.send("finish");
 					FileSaver.saveAs(blob, "downloadedFile");
@@ -222,6 +231,7 @@ export const Main: React.FC<Props> = () => {
 		};
 		
 		dataChannel.onopen = function () {
+			logTime("dataChannel open")
 			dataChannel.send("Hello World!");
 		};
 		
@@ -371,19 +381,28 @@ export const Main: React.FC<Props> = () => {
 	}
 	
 	async function onContentIdToRequestInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+		console.log(e.target.value)
 		e.preventDefault();
 		contentIdToRequest = parseInt(e.target.value);
-		contentHashToRequest = await OWT.instance?.hashOf(contentIdToRequest)!;
 		let chances = 0;
-		// TODO: ノード交換可能回数が更新されない問題を直す
-		if(e.target.value === "") chances = 0;
-		else {
+		
+		if(Number.isNaN(contentIdToRequest) || contentIdToRequest < 0) {
+			console.log("noo");
+			contentIdToRequest = 0;
+			chances = 0;
+		} else {
+			console.log("contentId To request", contentIdToRequest)
+			contentHashToRequest = await OWT.instance?.hashOf(contentIdToRequest)!
+			
 			try {
-				chances = (await FSC.instance?.countOf(currentAddress, e.target.value)!);
+				chances = (await FSC.instance?.countOf(currentAddress, contentIdToRequest)!);
 			} catch (e) {
 				chances = 0;
 			}
+			
+			console.log("chances", chances, await FSC.instance?.countOf(currentAddress, 0)!);
 		}
+		
 		chancesToExchangeNode_ = chances;
 		setChancesToExchangeNode(chances);
 	}
