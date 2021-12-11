@@ -42,7 +42,7 @@ let socket: Socket;
 
 let serverURL = "https://signaling-server-fileshare.herokuapp.com";
 // TODO: コメントアウトする↓
-serverURL = "http://localhost:5000";
+//serverURL = "http://localhost:5000";
 
 socket = socketIOClient(serverURL, {
   transports: ['websocket', 'polling', 'flashsocket'],
