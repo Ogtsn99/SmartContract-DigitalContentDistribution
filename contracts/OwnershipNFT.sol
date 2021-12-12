@@ -52,7 +52,7 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
         interfaceId == type(IERC2981Royalties).interfaceId;
     }
 
-    event Register(address indexed author, uint indexed contentId);
+    event Register(address indexed author, uint256 indexed contentId);
     event SetPrice(uint256 indexed contentId, uint256 price);
     event SetRoyalty(uint256 indexed contentId, uint256 royalty, address receiver);
     event SetContentHash(uint256 indexed contentId, string hash);
@@ -64,7 +64,6 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
 
     function register(uint256 price, uint256 royalty, address royaltyReceiver, string memory hash, string memory path) public {
         _authors[nextContentId] = msg.sender;
-        emit Register(msg.sender, nextContentId);
 
         if(price != 0) {
             _prices[nextContentId] = price;
@@ -88,6 +87,7 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
         }
 
         nextContentId += 1;
+        emit Register(msg.sender, nextContentId);
     }
 
     function setPrice(uint256 contentId, uint256 price) public {

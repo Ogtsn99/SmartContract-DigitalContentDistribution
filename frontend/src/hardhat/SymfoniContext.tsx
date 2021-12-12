@@ -6,12 +6,12 @@ import React, { useEffect, useState } from "react";
 import Web3Modal, { IProviderOptions } from "web3modal";
 import OwnershipMarket_ImplementationDeployment from "./deployments/mumbai/OwnershipMarket_Implementation.json";
 import OwnershipMarket_ProxyDeployment from "./deployments/mumbai/OwnershipMarket_Proxy.json";
-import FileSharingContractDeployment from "./deployments/mumbai/FileSharingContract.json";
-import { FileSharingContract } from "./typechain/FileSharingContract";
-import { FileSharingContract__factory } from "./typechain/factories/FileSharingContract__factory";
 import FileSharingTokenDeployment from "./deployments/mumbai/FileSharingToken.json";
 import { FileSharingToken } from "./typechain/FileSharingToken";
 import { FileSharingToken__factory } from "./typechain/factories/FileSharingToken__factory";
+import FileSharingContractDeployment from "./deployments/mumbai/FileSharingContract.json";
+import { FileSharingContract } from "./typechain/FileSharingContract";
+import { FileSharingContract__factory } from "./typechain/factories/FileSharingContract__factory";
 import OwnershipMarketDeployment from "./deployments/mumbai/OwnershipMarket.json";
 import { OwnershipMarket } from "./typechain/OwnershipMarket";
 import { OwnershipMarket__factory } from "./typechain/factories/OwnershipMarket__factory";
@@ -43,8 +43,8 @@ const defaultSymfoniContext: SymfoniContextInterface = {
 export const SymfoniContext = React.createContext<SymfoniContextInterface>(defaultSymfoniContext);
 export const OwnershipMarket_ImplementationContext = React.createContext<SymfoniOwnershipMarket>(emptyContract);
 export const OwnershipMarket_ProxyContext = React.createContext<SymfoniOwnershipMarket>(emptyContract);
-export const FileSharingContractContext = React.createContext<SymfoniFileSharingContract>(emptyContract);
 export const FileSharingTokenContext = React.createContext<SymfoniFileSharingToken>(emptyContract);
+export const FileSharingContractContext = React.createContext<SymfoniFileSharingContract>(emptyContract);
 export const OwnershipMarketContext = React.createContext<SymfoniOwnershipMarket>(emptyContract);
 export const OwnershipNFTContext = React.createContext<SymfoniOwnershipNFT>(emptyContract);
 export const ERC20Context = React.createContext<SymfoniERC20>(emptyContract);
@@ -74,14 +74,14 @@ export interface SymfoniOwnershipMarket {
     factory?: OwnershipMarket__factory;
 }
 
-export interface SymfoniFileSharingContract {
-    instance?: FileSharingContract;
-    factory?: FileSharingContract__factory;
-}
-
 export interface SymfoniFileSharingToken {
     instance?: FileSharingToken;
     factory?: FileSharingToken__factory;
+}
+
+export interface SymfoniFileSharingContract {
+    instance?: FileSharingContract;
+    factory?: FileSharingContract__factory;
 }
 
 export interface SymfoniOwnershipMarket {
@@ -120,8 +120,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
     const [providerPriority, setProviderPriority] = useState<string[]>(["web3modal", "hardhat"]);
     const [OwnershipMarket_Implementation, setOwnershipMarket_Implementation] = useState<SymfoniOwnershipMarket>(emptyContract);
     const [OwnershipMarket_Proxy, setOwnershipMarket_Proxy] = useState<SymfoniOwnershipMarket>(emptyContract);
-    const [FileSharingContract, setFileSharingContract] = useState<SymfoniFileSharingContract>(emptyContract);
     const [FileSharingToken, setFileSharingToken] = useState<SymfoniFileSharingToken>(emptyContract);
+    const [FileSharingContract, setFileSharingContract] = useState<SymfoniFileSharingContract>(emptyContract);
     const [OwnershipMarket, setOwnershipMarket] = useState<SymfoniOwnershipMarket>(emptyContract);
     const [OwnershipNFT, setOwnershipNFT] = useState<SymfoniOwnershipNFT>(emptyContract);
     const [ERC20, setERC20] = useState<SymfoniERC20>(emptyContract);
@@ -207,8 +207,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
             const finishWithContracts = (text: string) => {
                 setOwnershipMarket_Implementation(getOwnershipMarket_Implementation(_provider, _signer))
                 setOwnershipMarket_Proxy(getOwnershipMarket_Proxy(_provider, _signer))
-                setFileSharingContract(getFileSharingContract(_provider, _signer))
                 setFileSharingToken(getFileSharingToken(_provider, _signer))
+                setFileSharingContract(getFileSharingContract(_provider, _signer))
                 setOwnershipMarket(getOwnershipMarket(_provider, _signer))
                 setOwnershipNFT(getOwnershipNFT(_provider, _signer))
                 setERC20(getERC20(_provider, _signer))
@@ -263,17 +263,6 @@ export const Symfoni: React.FC<SymfoniProps> = ({
         return contract
     }
         ;
-    const getFileSharingContract = (_provider: providers.Provider, _signer?: Signer) => {
-
-        const contractAddress = FileSharingContractDeployment.receipt.contractAddress
-        const instance = _signer ? FileSharingContract__factory.connect(contractAddress, _signer) : FileSharingContract__factory.connect(contractAddress, _provider)
-        const contract: SymfoniFileSharingContract = {
-            instance: instance,
-            factory: _signer ? new FileSharingContract__factory(_signer) : undefined,
-        }
-        return contract
-    }
-        ;
     const getFileSharingToken = (_provider: providers.Provider, _signer?: Signer) => {
 
         const contractAddress = FileSharingTokenDeployment.receipt.contractAddress
@@ -281,6 +270,17 @@ export const Symfoni: React.FC<SymfoniProps> = ({
         const contract: SymfoniFileSharingToken = {
             instance: instance,
             factory: _signer ? new FileSharingToken__factory(_signer) : undefined,
+        }
+        return contract
+    }
+        ;
+    const getFileSharingContract = (_provider: providers.Provider, _signer?: Signer) => {
+
+        const contractAddress = FileSharingContractDeployment.receipt.contractAddress
+        const instance = _signer ? FileSharingContract__factory.connect(contractAddress, _signer) : FileSharingContract__factory.connect(contractAddress, _provider)
+        const contract: SymfoniFileSharingContract = {
+            instance: instance,
+            factory: _signer ? new FileSharingContract__factory(_signer) : undefined,
         }
         return contract
     }
@@ -341,8 +341,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
                     <CurrentAddressContext.Provider value={[currentAddress, setCurrentAddress]}>
                         <OwnershipMarket_ImplementationContext.Provider value={OwnershipMarket_Implementation}>
                             <OwnershipMarket_ProxyContext.Provider value={OwnershipMarket_Proxy}>
-                                <FileSharingContractContext.Provider value={FileSharingContract}>
-                                    <FileSharingTokenContext.Provider value={FileSharingToken}>
+                                <FileSharingTokenContext.Provider value={FileSharingToken}>
+                                    <FileSharingContractContext.Provider value={FileSharingContract}>
                                         <OwnershipMarketContext.Provider value={OwnershipMarket}>
                                             <OwnershipNFTContext.Provider value={OwnershipNFT}>
                                                 <ERC20Context.Provider value={ERC20}>
@@ -361,8 +361,8 @@ export const Symfoni: React.FC<SymfoniProps> = ({
                                                 </ERC20Context.Provider >
                                             </OwnershipNFTContext.Provider >
                                         </OwnershipMarketContext.Provider >
-                                    </FileSharingTokenContext.Provider >
-                                </FileSharingContractContext.Provider >
+                                    </FileSharingContractContext.Provider >
+                                </FileSharingTokenContext.Provider >
                             </OwnershipMarket_ProxyContext.Provider >
                         </OwnershipMarket_ImplementationContext.Provider >
                     </CurrentAddressContext.Provider>

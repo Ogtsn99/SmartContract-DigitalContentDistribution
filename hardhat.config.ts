@@ -39,6 +39,7 @@ const config: HardhatUserConfig = {
       },
       initialBaseFeePerGas: 0,
       gasPrice: 0,
+      
     },
     mumbai: {
       chainId: 80001,

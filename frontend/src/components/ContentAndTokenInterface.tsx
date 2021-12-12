@@ -3,7 +3,8 @@ import { CurrentAddressContext, FileSharingTokenContext, OwnershipNFTContext } f
 import { sha256 } from "js-sha256";
 import { Table } from "react-bootstrap";
 import ipfsClient from 'ipfs-http-client';
-import { BigNumber } from "ethers";
+import { BigNumber, ethers, utils } from "ethers";
+import date from "date-and-time";
 
 const ipfs = ipfsClient.create({host: 'ipfs.infura.io', port: 5001, protocol: 'https'})
 
@@ -38,6 +39,22 @@ class NFT {
 	}
 }
 
+let timeRecorder: any = [];
+function showTimeRecord() {
+	console.log(timeRecorder);
+}
+
+function logTime(message: string) {
+	console.log("log time", message);
+	let now = new Date();
+	let time:any = {
+		message: message,
+		time: date.format(now, 'YYYY/MM/DD HH:mm:ss'),
+		numTime: now.getTime()
+	}
+	timeRecorder.push(time);
+}
+
 export const ContentAndTokenInterface = () => {
 	const OWT = useContext(OwnershipNFTContext);
 	const FST = useContext(FileSharingTokenContext);
@@ -51,16 +68,29 @@ export const ContentAndTokenInterface = () => {
 	const [fstBalance, setFstBalance] = useState<string>("0");
 	
 	reader.onload = (event) => {
+		logTime("onload")
 		let buffer: ArrayBuffer;
 		if (event.target) buffer = event.target.result as ArrayBuffer;
 		else return;
 		fileHash = sha256(buffer)
+		logTime("hash")
 	}
 	
 	useEffect(()=> {
-		
 		const doAsync = async()=> {
 			if(!OWT.instance || !FST.instance) return ;
+			
+			OWT.instance!.on("Register", () => {
+				logTime("catch Register event");
+				showTimeRecord();
+			});
+			
+			OWT.instance!.on("Transfer", () => {
+				logTime("catch Transfer event: new token minted");
+				console.log("Yahoo")
+				showTimeRecord();
+			});
+			
 			let contentNumber: number = (await OWT.instance?.nextContentId())!.toNumber();
 			let tokenNumber: number = (await OWT.instance?.nextTokenId()!).toNumber();
 			setFstBalance((await FST.instance.balanceOf(currentAddress)).toString());
@@ -103,21 +133,26 @@ export const ContentAndTokenInterface = () => {
 		console.log(json);
 		let result = await ipfs.add(json);
 		console.log(result);
+		
 		await OWT.instance?.["register(uint256,uint256,address,string,string)"](price, royalty, royaltyReceiver, fileHash, result.path);
+		logTime("send Transaction");
 	}
 	
 	function onFileInputChange(e: any) {
 			e.preventDefault();
-			if (e.target.files)
+			if (e.target.files) {
 				file = e.target.files.item(0);
-			if (file != null)
+			}
+			
+			if (file != null) {
+				logTime("execute readAsArrayBuffer");
 				reader.readAsArrayBuffer(file);
+			}
 	}
 	
 	async function mint(contentId: number, price: BigNumber) {
-		console.log(currentAddress);
-		// @ts-ignore
 		await OWT.instance?.mint(contentId, currentAddress, {value: price});
+		logTime("mint token");
 	}
 	
 	function faucet() {
