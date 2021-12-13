@@ -218,10 +218,11 @@ export const Main: React.FC<Props> = () => {
 					}
 					
 					logTime("hash Check finished!");
-					showTimeRecord();
 					
-					dataChannel.send("finish");
 					FileSaver.saveAs(blob, "downloadedFile");
+					logTime("downloadFile");
+					dataChannel.send("finish");
+					showTimeRecord();
 					setSavable(true);
 				} else {
 					//console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
