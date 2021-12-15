@@ -167,10 +167,11 @@ export const Main: React.FC<Props> = () => {
 				bufferIndex += add;
 				uploadSum += add;*/
 				while(bufferIndex < requestedContent.buffer.byteLength && dataChannel.bufferedAmount <= 256000) {
+					let buffer = requestedContent.buffer;
 					let add = Math.min(bufferIndex + 64000, buffer.byteLength) - bufferIndex;
 					if(add === 0) return ;
 					dataChannel.send(buffer.slice(bufferIndex, bufferIndex + add));
-					console.log(bufferIndex, "-", bufferIndex + add, add, buffer.slice(bufferIndex, bufferIndex + add).byteLength);
+					// console.log(bufferIndex, "-", bufferIndex + add, add, buffer.slice(bufferIndex, bufferIndex + add).byteLength);
 					bufferIndex += add;
 					uploadSum += add;
 				}
@@ -190,6 +191,9 @@ export const Main: React.FC<Props> = () => {
 				if(m[0] === "finish") {
 					socket.emit("finish");
 					reInitPeerConnection("Node");
+				} else if(m[0] === "transferAgain") {
+					bufferIndex = 0;
+					dataChannel.send("byteLength-" + requestedContent.buffer.byteLength);
 				} else if (m[0] === "byteLength") {
 					byteSize = parseInt(m[1]);
 					console.log("byteLength =", byteSize);
@@ -218,7 +222,7 @@ export const Main: React.FC<Props> = () => {
 				bufferList.push(event.data);
 				byteCount += event.data.byteLength;
 				setProgress(byteCount / byteSize * 100);
-				console.log("receivedByteLength=", event.data.byteLength ,"byteCount=", byteCount, "byteSize=", byteSize);
+				//console.log("receivedByteLength=", event.data.byteLength ,"byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
 					if(savable_) return;
@@ -562,8 +566,7 @@ export const Main: React.FC<Props> = () => {
 		bufferList = []
 		byteCount = 0;
 		setProgress(0);
-		console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
-		dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+		dataChannel.send("transferAgain");
 	}
 	
 	function requestOtherNode() {
