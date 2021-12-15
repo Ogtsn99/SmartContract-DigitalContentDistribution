@@ -157,24 +157,12 @@ export const Main: React.FC<Props> = () => {
 		
 		if(role === "Node") {
 			dataChannel.onbufferedamountlow = () => {
-				// TODO: どっちがいいか測ろう
-				//console.log("on buffer amount low");
 				let buffer = requestedContent.buffer;
 				let add = Math.min(bufferIndex + 64000, buffer.byteLength) - bufferIndex;
 				if(add === 0) return ;
 				dataChannel.send(buffer.slice(bufferIndex, bufferIndex + add));
-				console.log(bufferIndex, "-", bufferIndex + add, add, buffer.slice(bufferIndex, bufferIndex + add).byteLength);
 				bufferIndex += add;
 				uploadSum += add;
-				/*while(bufferIndex < requestedContent.buffer.byteLength && dataChannel.bufferedAmount <= 256000) {
-					let buffer = requestedContent.buffer;
-					let add = Math.min(bufferIndex + 64000, buffer.byteLength) - bufferIndex;
-					if(add === 0) return ;
-					dataChannel.send(buffer.slice(bufferIndex, bufferIndex + add));
-					// console.log(bufferIndex, "-", bufferIndex + add, add, buffer.slice(bufferIndex, bufferIndex + add).byteLength);
-					bufferIndex += add;
-					uploadSum += add;
-				}*/
 			}
 		}
 		
