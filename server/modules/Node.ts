@@ -103,6 +103,7 @@ export class Node {
 				return ;
 			}
 			
+			console.log("start communication between " + "node(" + this.account + ") and client(" + this.client.account + ")");
 			io.to(socket.id).emit("request", {contentId: client.contentId ,answerSDP: client.answerSDP});
 		});
 		
@@ -114,6 +115,11 @@ export class Node {
 			} else {
 				io.to(this.socket.id).emit("error", {message: "client is null"});
 			}
+		})
+		
+		socket.on("finish", ()=> {
+			console.log("finish communication:", this.account);
+			this.client = null;
 		})
 		
 		socket.on("disconnect", ()=> {

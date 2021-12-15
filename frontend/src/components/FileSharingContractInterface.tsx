@@ -62,7 +62,9 @@ export const FileSharingContractInterface = () => {
 		downloadFee = downloadFee.add(b);
 		downloadFee = downloadFee.add(b);
 		downloadFee = downloadFee.add(b.div(2));
-		await FST.instance?.approve((await FSC.instance?.address)!.toString(), downloadFee);
+		let address = (await FSC.instance?.address)!.toString();
+		if((await FST.instance?.allowance(currentAddress, address)) !== downloadFee)
+			await FST.instance?.approve((await FSC.instance?.address)!.toString(), downloadFee);
 		await FSC.instance?.["payDownloadFee(address,uint256)"](currentAddress, contentId);
 	}
 	

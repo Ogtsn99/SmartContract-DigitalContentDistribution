@@ -66,11 +66,10 @@ export class Client {
 				this.node.client = null;
 			
 			let node = nodeManager.selectNode(data.contentId, exclude);
-			if(node)
-				console.log("選ばれしnode", node.account);
-			else console.log("選べるノードはありませんでした。");
-			
-			if(!node) {
+			if(node) {
+				console.log("Node selected:", node.account);
+			} else {
+				console.log("選べるノードはありませんでした。");
 				io.to(socket.id).emit("error", {type: "NG",
 					message: "failed to request a content(id=" + data.contentId + ")",
 					error: "Sorry, There's no node to provide. Try again later."});

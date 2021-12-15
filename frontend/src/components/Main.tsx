@@ -29,11 +29,12 @@ let pc: RTCPeerConnection;
 
 let dataChannel: RTCDataChannel;
 
-let dataChannelOption: RTCDataChannelInit = {
-	ordered: true,
-}
+let dataChannelOption: RTCDataChannelInit = {}
+
+let bufferIndex = 0;
 
 let requestedContentId: number;
+let requestedContent: Content;
 let bufferList: ArrayBuffer[] = [];
 let byteSize: number;
 let byteCount: number;
@@ -103,6 +104,8 @@ function logTime(message: string) {
 	timeRecorder.push(time);
 }
 
+let savable_ = false;
+
 // TODO: リファクタリング
 export const Main: React.FC<Props> = () => {
 	const OWT = useContext(OwnershipNFTContext);
@@ -126,14 +129,10 @@ export const Main: React.FC<Props> = () => {
 		setHash(sha256(buffer));
 	}
 	
-	function sendFile() {
-		if (!dataChannel) {
-			alert("data channel is not created");
-			return;
-		}
-		let length = buffer.byteLength;
-		
-		dataChannel.send("byteLength-" + length);
+	function reInitPeerConnection(role: string) {
+		pc.close();
+		dataChannel.close();
+		initPeerConnection("Node");
 	}
 	
 	function initPeerConnection(role: string) {
@@ -145,15 +144,39 @@ export const Main: React.FC<Props> = () => {
 		pc = new RTCPeerConnection(rtcConfig);
 		setupRTCPeerConnectionEventHandler(pc, role);
 		console.log("create datachannel!")
-		createDataChannel(pc);
+		createDataChannel(pc, role);
 	}
 	
-	function createDataChannel(pc: RTCPeerConnection) {
+	function createDataChannel(pc: RTCPeerConnection, role:string) {
 		dataChannel = pc.createDataChannel("LABEL", dataChannelOption);
-		setDataChannelEventHandler(dataChannel);
+		setDataChannelEventHandler(dataChannel, role);
 	}
 	
-	function setDataChannelEventHandler(dataChannel: RTCDataChannel) {
+	function setDataChannelEventHandler(dataChannel: RTCDataChannel, role:string) {
+		dataChannel.bufferedAmountLowThreshold = 0;
+		
+		if(role === "Node") {
+			dataChannel.onbufferedamountlow = () => {
+				// TODO: どっちがいいか測ろう
+				/*console.log("on buffer amount low");
+				let buffer = requestedContent.buffer;
+				let add = Math.min(bufferIndex + 64000, buffer.byteLength) - bufferIndex;
+				if(add === 0) return ;
+				dataChannel.send(buffer.slice(bufferIndex, bufferIndex + add));
+				console.log(bufferIndex, "-", bufferIndex + add, add, buffer.slice(bufferIndex, bufferIndex + add).byteLength);
+				bufferIndex += add;
+				uploadSum += add;*/
+				while(bufferIndex < requestedContent.buffer.byteLength && dataChannel.bufferedAmount <= 256000) {
+					let add = Math.min(bufferIndex + 64000, buffer.byteLength) - bufferIndex;
+					if(add === 0) return ;
+					dataChannel.send(buffer.slice(bufferIndex, bufferIndex + add));
+					console.log(bufferIndex, "-", bufferIndex + add, add, buffer.slice(bufferIndex, bufferIndex + add).byteLength);
+					bufferIndex += add;
+					uploadSum += add;
+				}
+			}
+		}
+		
 		dataChannel.onerror = function (error) {
 			console.log("Data Channel Error:", error);
 		};
@@ -165,22 +188,21 @@ export const Main: React.FC<Props> = () => {
 				let m = message.split('-');
 				
 				if(m[0] === "finish") {
-					pc.close();
-					dataChannel.close();
-					initPeerConnection("Node");
+					socket.emit("finish");
+					reInitPeerConnection("Node");
 				} else if (m[0] === "byteLength") {
 					byteSize = parseInt(m[1]);
+					console.log("byteLength =", byteSize);
 					byteCount = 0;
 					bufferList = [];
 					logTime("get byteSize");
-					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+					//dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				} else if (m[0] == "require") {
-					let start = parseInt(m[1]), end = Math.min(buffer.byteLength, parseInt(m[2]));
-					//console.log("start=", start, "end=", end);
-					uploadSum += end - start;
+					let start = parseInt(m[1]);
 					for (const e of contents_) {
 						if(e.contentId === requestedContentId) {
-							end = Math.min(e.buffer.byteLength, parseInt(m[2]));
+							let end = Math.min(e.buffer.byteLength, parseInt(m[2]));
+							uploadSum += end - start;
 							if(uploadSum >= e.buffer.byteLength * 3) {
 								alert("アップロードに失敗している、または相手が善良でない可能性があるため。通信を終了します")
 								pc.close();
@@ -196,9 +218,10 @@ export const Main: React.FC<Props> = () => {
 				bufferList.push(event.data);
 				byteCount += event.data.byteLength;
 				setProgress(byteCount / byteSize * 100);
-				//console.log("byteCount=", byteCount, "byteSize=", byteSize);
+				console.log("receivedByteLength=", event.data.byteLength ,"byteCount=", byteCount, "byteSize=", byteSize);
 				
 				if (byteCount === byteSize) {
+					if(savable_) return;
 					logTime("data received");
 					blob = new Blob(bufferList, {type: "octet/stream"});
 					logTime("bufferList to blob");
@@ -222,17 +245,17 @@ export const Main: React.FC<Props> = () => {
 					
 					dataChannel.send("finish");
 					FileSaver.saveAs(blob, "downloadedFile");
+					savable_ = true;
 					setSavable(true);
 				} else {
 					//console.log("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
-					dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
+					//dataChannel.send("require-" + byteCount + "-" + (Math.min(byteSize, byteCount + 64000)));
 				}
 			}
 		};
 		
 		dataChannel.onopen = function () {
 			logTime("dataChannel open")
-			dataChannel.send("Hello World!");
 		};
 		
 		dataChannel.onclose = function () {
@@ -292,9 +315,10 @@ export const Main: React.FC<Props> = () => {
 			console.log("- ICE connection state : ", pc.iceConnectionState);
 			if(pc.iceConnectionState == "disconnected") {
 				alert("通信が切断されました。");
-				pc.close();
-				dataChannel.close();
-				initPeerConnection("Node");
+				if(role === "Node") {
+					socket.emit("finish");
+				}
+				reInitPeerConnection(role);
 			} else if(pc.iceConnectionState == "connected") {
 				logTime("WebRTC conenction established");
 			}
@@ -347,19 +371,14 @@ export const Main: React.FC<Props> = () => {
 			dataChannel = event.channel;
 			// DataChannelオブジェクトのイベントハンドラの構築
 			console.log("Call : setupDataChannelEventHandler()");
-			setDataChannelEventHandler(dataChannel);
-			
-			console.log("requested contentId", requestedContentId);
-			console.log(contents.length);
+			setDataChannelEventHandler(dataChannel, role);
 			
 			if (role === "Node") {
-				for (const e of contents_) {
-					if(e.contentId === requestedContentId) {
-						dataChannel.send("byteLength-" + e.buffer.byteLength);
-						return;
-					}
-				}
+				console.log("send byteLength:", requestedContent.buffer.byteLength);
+				dataChannel.send("byteLength-" + requestedContent.buffer.byteLength);
 			}
+			
+			console.log("requested contentId", requestedContentId);
 		}
 	}
 	
@@ -419,7 +438,16 @@ export const Main: React.FC<Props> = () => {
 		
 		socket.on("request", async (data) => {
 			uploadSum = 0;
+			bufferIndex = 0;
+			
 			requestedContentId = data.contentId;
+			
+			for (const e of contents_) {
+				if(e.contentId === requestedContentId) {
+					requestedContent = e;
+					break;
+				}
+			}
 			// console.log(data);
 			// console.log("content id =", data.contentId);
 			
