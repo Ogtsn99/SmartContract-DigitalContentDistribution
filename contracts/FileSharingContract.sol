@@ -70,7 +70,9 @@ contract FileSharingContract {
     }
 
     function approveNode(address client, uint256 contentId) external {
-        require(msg.sender == client || msg.sender == _server, "You don't have permission.");
+        // msg.sender == _server は信用のためには消した方が良い
+        // サーバがapproveNodeをするならclientはガス代が不要になる
+        require(msg.sender == client  /* || msg.sender == _server */, "You don't have permission.");
         require(_arrangedNode[client][contentId] != address(0), "node not arranged");
         address node = _arrangedNode[client][contentId];
         _arrangedNode[client][contentId] = address(0);

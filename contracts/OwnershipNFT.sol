@@ -32,10 +32,8 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
     mapping(uint256 => uint256) private _royalties;
     // mapping from content Id to royalty receiver
     mapping(uint256 => address) private _receivers;
-    // mapping from tokenId to possessor
-    // possessor represents not the owner of the NFT,
-    // but the owner of the ownership of the content associated with the NFT
-    mapping(uint256 => address) private _possessors;
+    // mapping from tokenId to address by whom actually have content's ownership
+    mapping(uint256 => address) private _ownershipGrantedAddresses;
     // mapping from content Id to mapping from address to the number of ownerships.
     mapping(uint256 => mapping(address => uint256)) private ownerships;
 
@@ -148,10 +146,10 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
 
     function lend(uint256 tokenId, address to) public {
         require(ownerOf(tokenId) == msg.sender, "you are not the owner");
-        require(_possessors[tokenId] != to, "the account already possess the token");
-        ownerships[_contents[tokenId]][_possessors[tokenId]]--;
+        require(_ownershipGrantedAddresses[tokenId] != to, "the account already possess the token");
+        ownerships[_contents[tokenId]][_ownershipGrantedAddresses[tokenId]]--;
         ownerships[_contents[tokenId]][to]++;
-        _possessors[tokenId] = to;
+        _ownershipGrantedAddresses[tokenId] = to;
     }
 
     function royaltyInfo(uint256 tokenId, uint256 value) external view override
@@ -231,10 +229,10 @@ contract OwnershipNFT is ERC721, IERC2981Royalties, Ownable {
         uint256 tokenId
     ) internal override {
         if(from != address(0)) {
-            ownerships[_contents[tokenId]][_possessors[tokenId]] -= 1;
+            ownerships[_contents[tokenId]][_ownershipGrantedAddresses[tokenId]] -= 1;
         }
         if(to != address(0)) {
-            _possessors[tokenId] = to;
+            _ownershipGrantedAddresses[tokenId] = to;
             ownerships[_contents[tokenId]][to] += 1;
         }
     }
