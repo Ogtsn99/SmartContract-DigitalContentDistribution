@@ -34,6 +34,13 @@ export const io = new Server(httpServer, {
 	}
 });
 
+/*
+async function showAllSockets() {
+	console.log("all sockets =", await io.allSockets());
+}
+setInterval(showAllSockets, 5000);
+*/
+
 export const addressSet = new Set<string>();
 
 io.on("connection", (socket: Socket) => {

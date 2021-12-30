@@ -43,7 +43,7 @@ let socket: Socket;
 
 let serverURL = "https://signaling-server-fileshare.herokuapp.com";
 // TODO: コメントアウトする↓
-// serverURL = "http://localhost:5000";
+serverURL = "http://localhost:5000";
 
 socket = socketIOClient(serverURL, {
   transports: ['websocket', 'polling', 'flashsocket'],
@@ -569,7 +569,6 @@ export const Main: React.FC<Props> = () => {
 			
 			<button onClick={registerAsNode} disabled={role !== ""}>Become a Node</button>
 			<button onClick={registerAsClient} disabled={role !== ""}>Become a Client</button>
-			
 			<div hidden={role !== "Client"} className="mt-5">
 				<p>ノード交換可能回数: {chancesToExchangeNode}</p>
 				<form onSubmit={requestContent}>
