@@ -101,6 +101,7 @@ function logTime(message: string) {
 		time: date.format(now, 'YYYY/MM/DD HH:mm:ss'),
 		numTime: now.getTime()
 	}
+	console.log(time);
 	timeRecorder.push(time);
 }
 
@@ -440,8 +441,9 @@ export const Main: React.FC<Props> = () => {
 					break;
 				}
 			}
-			// console.log(data);
-			// console.log("content id =", data.contentId);
+			
+			
+			console.log("SDP exchanged:")
 			
 			let remoteDescription: RTCSessionDescriptionInit =
 				{
