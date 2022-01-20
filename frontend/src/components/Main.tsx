@@ -91,7 +91,12 @@ function showTimeRecord() {
 	console.log("WebRTC接続まで:", timeRecorder[2].numTime - timeRecorder[1].numTime);
 	console.log("データチャンネルオープンまで:", timeRecorder[4].numTime - timeRecorder[2].numTime)
 	console.log("データ受信まで:", timeRecorder[6].numTime - timeRecorder[4].numTime);
-	console.log("ハッシュ化:", timeRecorder[10].numTime - timeRecorder[6].numTime)
+	console.log("ハッシュ化:", timeRecorder[10].numTime - timeRecorder[6].numTime);
+	
+	console.log("スタート: ", timeRecorder[0].numTime)
+	console.log("WebRTC 接続:", timeRecorder[2].numTime);
+	console.log("データ受信:" , timeRecorder[6].numTime)
+	console.log("ハッシュ化", timeRecorder[10].numTime)
 }
 
 function logTime(message: string) {
@@ -101,7 +106,7 @@ function logTime(message: string) {
 		time: date.format(now, 'YYYY/MM/DD HH:mm:ss'),
 		numTime: now.getTime()
 	}
-	console.log(time);
+	console.log(message, time.numTime);
 	timeRecorder.push(time);
 }
 
@@ -442,8 +447,9 @@ export const Main: React.FC<Props> = () => {
 				}
 			}
 			
+			let now = new Date();
+			console.log("get answerSDP", now.getTime());
 			
-			console.log("SDP exchanged:")
 			
 			let remoteDescription: RTCSessionDescriptionInit =
 				{
